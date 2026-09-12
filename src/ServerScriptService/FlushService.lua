@@ -38,7 +38,6 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
     local center = Vector3.new(0, 13, 0)
     local started = os.clock()
     local connection
-    local survivors = 0
 
     connection = RunService.Heartbeat:Connect(function(dt)
         local elapsed = os.clock() - started
@@ -57,7 +56,6 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
             local humanoid = humanoidOf(player)
             if root and humanoid and humanoid.Health > 0 then
                 if shopService:HasLifebuoy(player) then
-                    survivors += 0
                     humanoid.AutoRotate = false
                     local phase = player.UserId % 20
                     local orbit = Vector3.new(math.cos(elapsed * 1.8 + phase) * 5, 2 + math.sin(elapsed * 5 + phase) * 1.2, math.sin(elapsed * 1.8 + phase) * 5)
@@ -72,7 +70,7 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
                     if dist < Config.Flush.PullRadius then
                         local inward = dist > 0.75 and -horizontal.Unit or Vector3.zero
                         local tangent = dist > 0.75 and Vector3.new(-horizontal.Z, 0, horizontal.X).Unit or Vector3.zero
-                        local desired = inward * pull + tangent * spin + Vector3.new(0, -10 - progress * 30, 0)
+                        local desired = inward * pull + tangent * spin + Vector3.new(0, -10 - progress * Config.Flush.SinkDepth, 0)
                         root.AssemblyLinearVelocity = root.AssemblyLinearVelocity:Lerp(desired, math.clamp(dt * 6, 0, 1))
                         root.AssemblyAngularVelocity = Vector3.new(spin * 0.15, spin, spin * 0.08)
                     end
@@ -89,18 +87,20 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
 
     local survivedCount = 0
     for _, player in Players:GetPlayers() do
-        local survived = shopService:HasLifebuoy(player)
+        local humanoid = humanoidOf(player)
+        local alive = humanoid and humanoid.Health > 0
+        local survived = alive and shopService:HasLifebuoy(player)
         if survived then survivedCount += 1 end
+
         player:SetAttribute("LastRoundSurvived", survived)
         dataService:MarkRound(player, survived)
+
         if survived then
             dataService:AddCoins(player, Config.Economy.SurvivalReward)
-            local humanoid = humanoidOf(player)
-            if humanoid then humanoid.AutoRotate = true end
+            humanoid.AutoRotate = true
         else
             dataService:AddCoins(player, Config.Economy.ParticipationReward)
-            local humanoid = humanoidOf(player)
-            if humanoid then humanoid.Health = 0 end
+            if humanoid and humanoid.Health > 0 then humanoid.Health = 0 end
         end
     end
 
