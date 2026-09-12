@@ -20,6 +20,7 @@ local files = {
     {path = "src/ServerScriptService/HazardService.server.lua", parent = ServerScriptService, name = "HazardService", className = "Script"},
     {path = "src/ServerScriptService/Main.server.lua", parent = ServerScriptService, name = "Main", className = "Script"},
     {path = "src/ServerScriptService/RoundService.lua", parent = ServerScriptService, name = "RoundService", className = "ModuleScript"},
+    {path = "src/ServerScriptService/RoundServiceFixed.lua", parent = ServerScriptService, name = "RoundServiceFixed", className = "ModuleScript"},
     {path = "src/ServerScriptService/RoundStatsService.lua", parent = ServerScriptService, name = "RoundStatsService", className = "ModuleScript"},
     {path = "src/ServerScriptService/ShopService.lua", parent = ServerScriptService, name = "ShopService", className = "ModuleScript"},
     {path = "src/ServerScriptService/UpperCourseBuilder.lua", parent = ServerScriptService, name = "UpperCourseBuilder", className = "ModuleScript"},
