@@ -115,9 +115,11 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
 
         if survived then
             dataService:AddCoins(player, Config.Economy.SurvivalReward)
+            dataService:AddXP(player, Config.Progression.SurvivalXP)
             humanoid.AutoRotate = true
         else
             dataService:AddCoins(player, Config.Economy.ParticipationReward)
+            dataService:AddXP(player, Config.Progression.ParticipationXP)
             if humanoid and humanoid.Health > 0 then
                 humanoid.Health = 0
             end
