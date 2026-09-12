@@ -9,7 +9,9 @@ RoundService.EndAt = 0
 RoundService.RoundNumber = 0
 
 function RoundService:GetTimeLeft()
-    if self.State ~= "ROUND" then return 0 end
+    if self.State ~= "ROUND" then
+        return 0
+    end
     return math.max(0, math.ceil(self.EndAt - os.clock()))
 end
 
@@ -39,6 +41,7 @@ end
 function RoundService:Run(arena, stateRemote, coinService, shopService, flushService, dataService, achievementService)
     while true do
         self.State = "INTERMISSION"
+        self.EndAt = 0
         for remaining = Config.Round.Intermission, 1, -1 do
             stateRemote:FireAllClients("INTERMISSION", remaining)
             task.wait(1)
@@ -53,6 +56,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         self.RoundNumber += 1
         shopService:Reset()
         RoundStatsService:Reset(players)
+
         for i, player in ipairs(players) do
             player:SetAttribute("HasLifebuoy", false)
             player:SetAttribute("RoundActive", true)
@@ -72,19 +76,25 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         end
 
         self.State = "FLUSH"
+        self.EndAt = 0
         coinService:Stop()
         stateRemote:FireAllClients("FLUSH_WARNING")
         flushService:Run(arena, shopService, dataService, stateRemote)
 
+        -- FlushService determines the result and pays the round reward.
+        -- RoundService is the only place that records the round in persistent stats.
         for _, player in Players:GetPlayers() do
             player:SetAttribute("RoundActive", false)
             local survived = player:GetAttribute("LastRoundSurvived") == true
             dataService:MarkRound(player, survived)
+
             if achievementService then
                 achievementService:EvaluateRound(player, RoundStatsService:Get(player), survived)
             end
+
             stateRemote:FireClient(player, "ROUND_STATS", RoundStatsService:Get(player), survived)
         end
+
         task.wait(Config.Round.ResultsDuration)
     end
 end
