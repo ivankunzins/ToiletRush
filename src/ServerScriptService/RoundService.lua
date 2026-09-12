@@ -36,6 +36,7 @@ local function teleportPlayer(player, index, arena)
         newHumanoid.Health = newHumanoid.MaxHealth
         newHumanoid.AutoRotate = true
     end
+    return newHumanoid
 end
 
 function RoundService:Run(arena, stateRemote, coinService, shopService, flushService, dataService, achievementService)
@@ -56,13 +57,23 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         self.RoundNumber += 1
         shopService:Reset()
         RoundStatsService:Reset(players)
+        local deathConnections = {}
 
         for i, player in ipairs(players) do
             player:SetAttribute("HasLifebuoy", false)
             player:SetAttribute("RoundActive", true)
             player:SetAttribute("FlushActive", false)
+            player:SetAttribute("Eliminated", false)
             player:SetAttribute("LastRoundSurvived", false)
-            teleportPlayer(player, i, arena)
+
+            local humanoid = teleportPlayer(player, i, arena)
+            if humanoid then
+                deathConnections[player] = humanoid.Died:Connect(function()
+                    if player:GetAttribute("RoundActive") == true then
+                        player:SetAttribute("Eliminated", true)
+                    end
+                end)
+            end
         end
 
         coinService:Start(arena, dataService)
@@ -105,6 +116,10 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
             end
 
             stateRemote:FireClient(player, "ROUND_STATS", RoundStatsService:Get(player), survived)
+        end
+
+        for _, connection in pairs(deathConnections) do
+            connection:Disconnect()
         end
 
         task.wait(Config.Round.ResultsDuration)
