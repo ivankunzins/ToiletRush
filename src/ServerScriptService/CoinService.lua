@@ -53,9 +53,9 @@ local function collect(coin, player, dataService)
     local xpOk, levelUp, level = dataService:AddXP(player, xp)
 
     if feedback then
-        feedback:FireClient(player, "COIN", "+" .. tostring(value))
+        feedback:FireClient(player, "COIN", "+" .. tostring(value) .. " COINS • +" .. tostring(xp) .. " XP")
         if xpOk and levelUp then
-            feedback:FireClient(player, "LEVEL_UP", tostring(level))
+            feedback:FireClient(player, "LEVEL_UP", "LEVEL UP! • LEVEL " .. tostring(level))
         end
     end
 
