@@ -9,7 +9,9 @@ local active = false
 local feedback = nil
 
 local function resetCoin(coin)
-    if not coin or not coin.Parent then return end
+    if not coin or not coin.Parent then
+        return
+    end
     coin:SetAttribute("Collected", false)
     coin.Transparency = 0
     coin.CanTouch = true
@@ -19,7 +21,7 @@ local function collect(coin, player, dataService)
     if not active or not coin.Parent or coin:GetAttribute("Collected") then
         return
     end
-    if player:GetAttribute("RoundActive") ~= true then
+    if player:GetAttribute("RoundActive") ~= true or player:GetAttribute("Eliminated") == true then
         return
     end
 
@@ -89,12 +91,6 @@ end
 
 function CoinService:Stop()
     active = false
-    -- Keep collection disabled immediately, but leave coin state to Start()
-    -- so the next round always begins with a complete field of coins.
 end
-
-Players.PlayerRemoving:Connect(function(player)
-    -- Coin connections are per coin; no player-specific state is retained.
-end)
 
 return CoinService
