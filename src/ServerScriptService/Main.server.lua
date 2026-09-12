@@ -90,7 +90,6 @@ Players.PlayerAdded:Connect(function(player)
     player:SetAttribute("LobbyStatus", "LOBBY")
     player:SetAttribute("CoinsCollected", 0)
     player:SetAttribute("CoinGoalNotified", false)
-    player:SetAttribute("DataReady", false)
 
     task.defer(function()
         RoundService:SyncPlayer(player, stateRemote)
