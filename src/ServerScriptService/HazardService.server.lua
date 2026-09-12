@@ -1,15 +1,18 @@
--- Server-owned hazard animation. The world builder marks moving parts with attributes.
+-- Server-authoritative hazard movement + damage.
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
+local Config = require(game.ReplicatedStorage:WaitForChild("Config"))
 
 local arena = Workspace:WaitForChild("ToiletArena", 30)
 if not arena then return end
 local obstacles = arena:WaitForChild("Obstacles")
 local animated = {}
+local hitAt = {}
 
 for _, object in obstacles:GetChildren() do
     local motion = object:GetAttribute("Motion")
-    if motion then
+    if motion and object:IsA("BasePart") then
         animated[#animated + 1] = {
             part = object,
             origin = object.CFrame,
@@ -20,6 +23,38 @@ for _, object in obstacles:GetChildren() do
         }
     end
 end
+
+local function damagePlayer(part, hit)
+    local character = hit:FindFirstAncestorOfClass("Model")
+    local player = character and Players:GetPlayerFromCharacter(character)
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not player or not humanoid or humanoid.Health <= 0 or not root then return end
+
+    local now = os.clock()
+    hitAt[player] = hitAt[player] or {}
+    if now - (hitAt[player][part] or 0) < Config.Hazards.Cooldown then return end
+    hitAt[player][part] = now
+
+    humanoid:TakeDamage(Config.Hazards.Damage)
+    local away = root.Position - part.Position
+    local horizontal = Vector3.new(away.X, 0, away.Z)
+    if horizontal.Magnitude > 0.1 then
+        root.AssemblyLinearVelocity = horizontal.Unit * Config.Hazards.Knockback + Vector3.new(0, Config.Hazards.VerticalKnockback, 0)
+    end
+end
+
+for _, object in obstacles:GetChildren() do
+    if object:IsA("BasePart") then
+        object.Touched:Connect(function(hit)
+            damagePlayer(object, hit)
+        end)
+    end
+end
+
+Players.PlayerRemoving:Connect(function(player)
+    hitAt[player] = nil
+end)
 
 RunService.Heartbeat:Connect(function()
     local t = os.clock()
