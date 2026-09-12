@@ -29,6 +29,7 @@ local files = {
     {path = "src/StarterPlayer/StarterPlayerScripts/Achievements.client.lua", parent = StarterPlayerScripts, name = "Achievements", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Audio.client.lua", parent = StarterPlayerScripts, name = "Audio", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/CoinGoal.client.lua", parent = StarterPlayerScripts, name = "CoinGoal", className = "LocalScript"},
+    {path = "src/StarterPlayer/StarterPlayerScripts/ConsistencyPatch.client.lua", parent = StarterPlayerScripts, name = "ConsistencyPatch", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Effects.client.lua", parent = StarterPlayerScripts, name = "Effects", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/HUD.client.lua", parent = StarterPlayerScripts, name = "HUD", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Feedback.client.lua", parent = StarterPlayerScripts, name = "Feedback", className = "LocalScript"},
