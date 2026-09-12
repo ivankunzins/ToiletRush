@@ -9,6 +9,7 @@ local CoinService = require(ServerScriptService:WaitForChild("CoinService"))
 local ShopService = require(ServerScriptService:WaitForChild("ShopService"))
 local FlushService = require(ServerScriptService:WaitForChild("FlushService"))
 local RoundService = require(ServerScriptService:WaitForChild("RoundService"))
+local AchievementService = require(ServerScriptService:WaitForChild("AchievementService"))
 
 local remotes = ReplicatedStorage:FindFirstChild("Remotes") or Instance.new("Folder")
 remotes.Name = "Remotes"
@@ -27,6 +28,7 @@ end
 local stateRemote = remote("GameState")
 local buyRemote = remote("BuyLifebuoy")
 local feedbackRemote = remote("Feedback")
+local achievementRemote = remote("Achievements")
 
 feedbackRemote.OnServerEvent:Connect(function(player, action)
     if action ~= "CLAIM_DAILY" then return end
@@ -38,6 +40,12 @@ feedbackRemote.OnServerEvent:Connect(function(player, action)
     end
 end)
 
+achievementRemote.OnServerEvent:Connect(function(player, action)
+    if action == "GET" then
+        achievementRemote:FireClient(player, "LIST", AchievementService:GetForPlayer(player))
+    end
+end)
+
 Players.PlayerAdded:Connect(function(player)
     player:SetAttribute("HasLifebuoy", false)
     player:SetAttribute("RoundActive", false)
@@ -45,6 +53,7 @@ Players.PlayerAdded:Connect(function(player)
 end)
 
 local arena = WorldBuilder:Build()
+AchievementService:Bind(DataService, feedbackRemote)
 ShopService:Bind(buyRemote, DataService, RoundService, feedbackRemote)
 CoinService:BindFeedback(feedbackRemote)
 
@@ -55,5 +64,5 @@ print(("[ToiletRush] Arena ready. Round=%ss, Lifebuoy window=%ss, cost=%s coins"
 ))
 
 task.spawn(function()
-    RoundService:Run(arena, stateRemote, CoinService, ShopService, FlushService, DataService)
+    RoundService:Run(arena, stateRemote, CoinService, ShopService, FlushService, DataService, AchievementService)
 end)
