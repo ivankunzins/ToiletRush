@@ -4,6 +4,7 @@ local TweenService = game:GetService("TweenService")
 
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local stateRemote = remotes:WaitForChild("GameState")
+local Config = require(ReplicatedStorage:WaitForChild("Config"))
 
 local function getCamera()
     return workspace.CurrentCamera
@@ -24,8 +25,6 @@ local function setupCoin(coin)
     light.Color = coin.Color
     light.Parent = coin
 end
-
-local Config = require(ReplicatedStorage:WaitForChild("Config"))
 
 task.spawn(function()
     local arena = workspace:WaitForChild("ToiletArena", 30)
