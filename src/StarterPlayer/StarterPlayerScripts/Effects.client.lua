@@ -9,6 +9,7 @@ local camera = workspace.CurrentCamera
 local function setupCoin(coin)
     if not coin:IsA("BasePart") or coin:GetAttribute("FXReady") then return end
     coin:SetAttribute("FXReady", true)
+    coin:SetAttribute("FXBasePosition", coin.Position)
     local light = Instance.new("PointLight")
     light.Brightness = coin:GetAttribute("Value") == 5 and 2.5 or 1
     light.Range = coin:GetAttribute("Value") == 5 and 14 or 8
@@ -31,13 +32,11 @@ RunService.RenderStepped:Connect(function()
     local t = os.clock()
     for _, coin in coins:GetChildren() do
         if coin:IsA("BasePart") and coin:GetAttribute("Collected") ~= true then
-            local base = coin:GetAttribute("FXBaseCFrame")
-            if not base then
-                coin:SetAttribute("FXBaseCFrame", true)
-                base = coin.CFrame
+            local base = coin:GetAttribute("FXBasePosition")
+            if typeof(base) == "Vector3" then
+                local y = math.sin(t * 2.4 + base.X * 0.03 + base.Z * 0.02) * 0.18
+                coin.CFrame = CFrame.new(base + Vector3.new(0, y, 0)) * CFrame.Angles(0, t * 1.8, 0)
             end
-            local y = math.sin(t * 2.4 + coin.Position.X * 0.03 + coin.Position.Z * 0.02) * 0.18
-            coin.CFrame = CFrame.new(coin.Position + Vector3.new(0, y, 0)) * CFrame.Angles(0, t * 1.8, 0)
         end
     end
 end)
@@ -60,9 +59,7 @@ stateRemote.OnClientEvent:Connect(function(event, value)
         local seconds = tonumber(value) or 0
         local fov = 70 + math.max(0, 4 - seconds) * 4
         TweenService:Create(camera, TweenInfo.new(0.18), {FieldOfView = fov}):Play()
-    elseif event == "ROUND_START" then
-        resetCamera()
-    elseif event == "ROUND_RESULTS" then
+    elseif event == "ROUND_START" or event == "ROUND_RESULTS" then
         resetCamera()
     end
 end)
