@@ -194,6 +194,12 @@ function DataService:ClaimDaily(player)
     return true, reward
 end
 
+function DataService:ResetRoundProgress(player)
+    if not profiles[player] then return false end
+    player:SetAttribute("CoinCombo", 0)
+    return true
+end
+
 local function makePayload(data)
     return {
         Coins = data.Coins,
