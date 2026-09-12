@@ -58,10 +58,17 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
                 if shopService:HasLifebuoy(player) then
                     humanoid.AutoRotate = false
                     local phase = player.UserId % 20
-                    local orbit = Vector3.new(math.cos(elapsed * 1.8 + phase) * 5, 2 + math.sin(elapsed * 5 + phase) * 1.2, math.sin(elapsed * 1.8 + phase) * 5)
+                    local orbit = Vector3.new(
+                        math.cos(elapsed * 1.8 + phase) * 5,
+                        2 + math.sin(elapsed * 5 + phase) * 1.2,
+                        math.sin(elapsed * 1.8 + phase) * 5
+                    )
                     local target = center + orbit
                     local delta = target - root.Position
-                    root.AssemblyLinearVelocity = root.AssemblyLinearVelocity:Lerp(delta * 3 + Vector3.new(0, 4, 0), math.clamp(dt * 5, 0, 1))
+                    root.AssemblyLinearVelocity = root.AssemblyLinearVelocity:Lerp(
+                        delta * 3 + Vector3.new(0, 4, 0),
+                        math.clamp(dt * 5, 0, 1)
+                    )
                     root.AssemblyAngularVelocity = Vector3.new(0, 2.5, 0)
                 else
                     local offset = root.Position - center
@@ -83,24 +90,29 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
         stateRemote:FireAllClients("FLUSH_TICK", remaining)
         task.wait(1)
     end
-    if connection then connection:Disconnect() end
+    if connection then
+        connection:Disconnect()
+    end
 
     local survivedCount = 0
     for _, player in Players:GetPlayers() do
         local humanoid = humanoidOf(player)
         local alive = humanoid and humanoid.Health > 0
         local survived = alive and shopService:HasLifebuoy(player)
-        if survived then survivedCount += 1 end
+        if survived then
+            survivedCount += 1
+        end
 
         player:SetAttribute("LastRoundSurvived", survived)
-        dataService:MarkRound(player, survived)
 
         if survived then
             dataService:AddCoins(player, Config.Economy.SurvivalReward)
             humanoid.AutoRotate = true
         else
             dataService:AddCoins(player, Config.Economy.ParticipationReward)
-            if humanoid and humanoid.Health > 0 then humanoid.Health = 0 end
+            if humanoid and humanoid.Health > 0 then
+                humanoid.Health = 0
+            end
         end
     end
 
@@ -114,7 +126,7 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
         }):Play()
     end
     if drain and baseDrain then
-        TweenService:Create(drain, TweenInfo.new(1.0, Enum.EasingStyle.Quad), { Size = baseDrain }):Play()
+        TweenService:Create(drain, TweenInfo.new(1.0, Enum.EasingStyle.Quad), {Size = baseDrain}):Play()
     end
 end
 
