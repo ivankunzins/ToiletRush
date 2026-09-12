@@ -35,12 +35,15 @@ Config.Progression = {
 Config.World = {
     ArenaRadius = 105,
     ArenaY = 12,
-    CoinCount = 72,
-    RareCoinCount = 10,
+    -- Fewer, more valuable coins: the route stays readable instead of looking like a coin field.
+    CoinCount = 24,
+    RareCoinCount = 4,
     CoinRespawnSeconds = 3,
     CoinPickupRadius = 5.5,
-    ObstacleCount = 32,
+    ObstacleCount = 24,
     SpawnCount = 16,
+    Floors = 3,
+    FloorHeight = 18,
 }
 
 Config.Hazards = {
@@ -61,7 +64,8 @@ Config.Flush = {
 Config.Audio = {
     CoinSoundId = "rbxassetid://6787582810",
     RareCoinSoundId = "rbxassetid://6787582810",
-    MusicSoundId = "rbxassetid://9120386436",
+    -- Roblox Creator Hub uses this upbeat track as its 2D background-audio example.
+    MusicSoundId = "rbxassetid://1841461968",
     CoinVolume = 0.65,
     RareCoinVolume = 0.9,
     MusicVolume = 0.16,
