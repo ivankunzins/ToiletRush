@@ -6,7 +6,6 @@ local GROUT = Color3.fromRGB(175, 182, 186)
 local DARK = Color3.fromRGB(42, 47, 52)
 local METAL = Color3.fromRGB(155, 165, 170)
 local GOLD = Color3.fromRGB(255, 211, 58)
-local GOLD_DARK = Color3.fromRGB(196, 145, 25)
 local GLASS = Color3.fromRGB(130, 190, 215)
 local WOOD = Color3.fromRGB(118, 76, 45)
 
@@ -37,21 +36,6 @@ local function addLight(parent, position, brightness, range)
     light.Parent = p
 end
 
-local function addTileGrid(parent, wallName, origin, horizontal, vertical, rows, cols, tileW, tileH)
-    for row = 0, rows - 1 do
-        for col = 0, cols - 1 do
-            local x = origin.X + horizontal.X * (col * tileW)
-            local y = origin.Y + vertical.Y * (row * tileH)
-            local z = origin.Z + horizontal.Z * (col * tileW)
-            local offset = ((row + col) % 2 == 0) and 0 or 0.5
-            x += horizontal.X * (offset * tileW)
-            z += horizontal.Z * (offset * tileW)
-            local tile = makePart(parent, wallName .. "Tile", Vector3.new(tileW - 0.18, tileH - 0.18, 0.35), CFrame.new(x, y, z), Enum.Material.Marble, (row % 2 == 0) and TILE or WHITE, false)
-            tile.CanQuery = false
-        end
-    end
-end
-
 local function makeCoinVisual(coin, rare)
     if not coin:IsA("BasePart") then return end
 
@@ -75,25 +59,12 @@ local function makeCoinVisual(coin, rare)
         light.Parent = coin
     end
 
-    local gui = coin:FindFirstChild("CoinPrompt")
-    if not gui then
-        gui = Instance.new("BillboardGui")
-        gui.Name = "CoinPrompt"
-        gui.Size = UDim2.fromOffset(110, 42)
-        gui.StudsOffset = Vector3.new(0, 2.9, 0)
-        gui.AlwaysOnTop = true
-        gui.MaxDistance = 150
-        gui.Parent = coin
-
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.fromScale(1, 1)
-        label.BackgroundTransparency = 1
-        label.Text = "+" .. tostring(rare and 10 or 5)
-        label.TextColor3 = rare and Color3.fromRGB(225, 195, 255) or GOLD
-        label.TextStrokeTransparency = 0.2
-        label.Font = Enum.Font.GothamBlack
-        label.TextScaled = true
-        label.Parent = gui
+    -- WorldBuilder already creates a value billboard for rare coins. Update it instead of duplicating it.
+    local labelGui = coin:FindFirstChild("Label")
+    local label = labelGui and labelGui:FindFirstChildOfClass("TextLabel")
+    if rare and label then
+        label.Text = "+10"
+        label.TextColor3 = Color3.fromRGB(225, 195, 255)
     end
 end
 
@@ -102,13 +73,13 @@ function BathroomArchitecture:Apply(arena)
     bathroom.Name = "Bathroom"
     bathroom.Parent = arena
 
-    -- Make the shell feel like a real, enclosed bathroom instead of a flat arena.
+    -- Architectural trim around the playable bowl.
     makePart(bathroom, "FloorTrimBack", Vector3.new(246, 3, 2), CFrame.new(0, 4.5, -113.5), Enum.Material.Marble, WHITE, true)
     makePart(bathroom, "FloorTrimFront", Vector3.new(246, 3, 2), CFrame.new(0, 4.5, 113.5), Enum.Material.Marble, WHITE, true)
     makePart(bathroom, "FloorTrimLeft", Vector3.new(2, 3, 246), CFrame.new(-113.5, 4.5, 0), Enum.Material.Marble, WHITE, true)
     makePart(bathroom, "FloorTrimRight", Vector3.new(2, 3, 246), CFrame.new(113.5, 4.5, 0), Enum.Material.Marble, WHITE, true)
 
-    -- Dark grout gives the large walls a convincing tile scale.
+    -- Tile seams at a believable bathroom scale.
     for y = 7, 49, 6 do
         for _, spec in ipairs({
             {"Back", Vector3.new(246, 0.22, 0.35), CFrame.new(0, y, -113.1)},
@@ -120,11 +91,11 @@ function BathroomArchitecture:Apply(arena)
         end
     end
 
-    -- Large divided window with a believable outdoor backdrop.
+    -- Large divided window and a simple outdoor horizon.
     local windowView = makePart(bathroom, "NaturalWindowView", Vector3.new(82, 30, 0.5), CFrame.new(0, 34, -112.9), Enum.Material.SmoothPlastic, Color3.fromRGB(126, 184, 215), false)
     local skyTop = makePart(bathroom, "WindowSky", Vector3.new(78, 12, 0.25), CFrame.new(0, 42, -112.55), Enum.Material.Neon, Color3.fromRGB(105, 180, 225), false)
     local horizon = makePart(bathroom, "WindowHorizon", Vector3.new(78, 10, 0.25), CFrame.new(0, 30, -112.5), Enum.Material.Grass, Color3.fromRGB(92, 145, 78), false)
-    local sill = makePart(bathroom, "WindowSill", Vector3.new(88, 2.2, 4), CFrame.new(0, 18.2, -110.5), Enum.Material.Marble, WHITE, true)
+    makePart(bathroom, "WindowSill", Vector3.new(88, 2.2, 4), CFrame.new(0, 18.2, -110.5), Enum.Material.Marble, WHITE, true)
 
     for x = -28, 28, 28 do
         makePart(bathroom, "WindowVerticalFrame", Vector3.new(1.4, 30, 2), CFrame.new(x, 34, -111.7), Enum.Material.Metal, DARK, true)
@@ -135,21 +106,21 @@ function BathroomArchitecture:Apply(arena)
     windowView.Transparency = 0.25
     skyTop.Transparency = 0.35
     horizon.Transparency = 0.2
-    sill.CanTouch = false
 
-    -- Ceiling beams and recessed lights make the room feel architectural.
+    -- Ceiling beams and warm lighting.
     for _, x in ipairs({-75, 0, 75}) do
         makePart(bathroom, "CeilingBeam", Vector3.new(3, 2, 218), CFrame.new(x, 53, 0), Enum.Material.Wood, WOOD, true)
         addLight(bathroom, Vector3.new(x, 51.5, -55), 1.8, 34)
         addLight(bathroom, Vector3.new(x, 51.5, 25), 1.5, 30)
     end
 
-    -- More believable vanity, mirror and shower details.
+    -- Vanity, basin, mirror and shower.
     makePart(bathroom, "VanityCabinet", Vector3.new(32, 14, 13), CFrame.new(-92, 12, -43), Enum.Material.Wood, WOOD, true)
     makePart(bathroom, "VanityCounter", Vector3.new(36, 2.5, 16), CFrame.new(-92, 20, -43), Enum.Material.Marble, WHITE, true)
     local basin = makePart(bathroom, "Basin", Vector3.new(14, 2.5, 10), CFrame.new(-92, 21.5, -43), Enum.Material.SmoothPlastic, WHITE, false)
     basin.Shape = Enum.PartType.Cylinder
-    makePart(bathroom, "Faucet", Vector3.new(1.8, 7, 1.8), CFrame.new(-92, 25, -43), Enum.Material.Metal, METAL, false).Shape = Enum.PartType.Cylinder
+    local faucet = makePart(bathroom, "Faucet", Vector3.new(1.8, 7, 1.8), CFrame.new(-92, 25, -43), Enum.Material.Metal, METAL, false)
+    faucet.Shape = Enum.PartType.Cylinder
     local mirror = makePart(bathroom, "VanityMirror", Vector3.new(30, 20, 0.8), CFrame.new(-92, 38, -34.8), Enum.Material.Glass, GLASS, false)
     mirror.Transparency = 0.18
 
@@ -160,7 +131,6 @@ function BathroomArchitecture:Apply(arena)
     local head = makePart(bathroom, "ShowerHead", Vector3.new(7, 2, 7), CFrame.new(82, 45, -58), Enum.Material.Metal, METAL, false)
     head.Shape = Enum.PartType.Cylinder
 
-    -- Towel rack, soap bottles and toilet paper add recognizable bathroom scale.
     makePart(bathroom, "TowelRack", Vector3.new(2, 2, 14), CFrame.new(-63, 27, -43), Enum.Material.Metal, METAL, true)
     makePart(bathroom, "Towel", Vector3.new(1, 10, 12), CFrame.new(-63, 21, -43), Enum.Material.Fabric, Color3.fromRGB(85, 145, 170), false)
     for i = 1, 4 do
@@ -170,7 +140,7 @@ function BathroomArchitecture:Apply(arena)
     local paper = makePart(bathroom, "PaperRoll", Vector3.new(3, 7, 7), CFrame.new(-101, 17, 22), Enum.Material.SmoothPlastic, WHITE, false)
     paper.Shape = Enum.PartType.Cylinder
 
-    -- Upgrade all existing coins: large, round, metallic and reliable to touch.
+    -- Large, round, touch-enabled coins.
     local coins = arena:FindFirstChild("Coins")
     if coins then
         for _, coin in ipairs(coins:GetChildren()) do
