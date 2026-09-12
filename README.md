@@ -1,33 +1,31 @@
 # 🚽 Toilet Rush: DON'T GET FLUSHED!
 
-Roblox multiplayer survival game built around one simple question: **who survives the flush?**
+A fast Roblox multiplayer survival game: collect coins, dodge ridiculous bathroom hazards, buy a Lifebuoy in the final 20 seconds, and survive the BIG FLUSH.
 
-## Game loop
-1. A 3-minute round begins.
-2. Players run around a giant toilet arena and collect Flush Coins.
-3. Obstacles force movement, jumping and route decisions.
-4. At 20 seconds remaining, the Lifebuoy shop opens.
-5. A Lifebuoy costs 25 Flush Coins.
-6. At zero, the toilet flush starts: players are pulled toward the drain and spun down.
-7. Lifebuoy owners float and survive.
-8. Survivors receive a larger reward; eliminated players receive a participation reward.
-9. The next round starts after the results window.
+## Core loop
+- 10-second intermission.
+- 180-second survival round.
+- Collect regular coins (+1) and rare coins (+5).
+- Dodge rotating sweepers, bouncing soap, moving pipes and giant brushes.
+- At 20 seconds: the Lifebuoy shop opens.
+- Lifebuoy price: 25 coins.
+- At zero: water contracts, the drain expands, players spin and are pulled inward.
+- Lifebuoy owners orbit the drain and survive.
+- Survivors get +40 coins and a win; flushed players get +10 participation coins.
+- Results screen, then the next round.
 
-## Technical architecture
-- **Luau** with server-authoritative gameplay.
-- **Rojo** project layout for source-controlled Roblox development.
-- Modular services: `DataService`, `RoundService`, `CoinService`, `ShopService`, `FlushService`, `WorldBuilder`.
-- RemoteEvents are created by the server at runtime.
-- Coin collection and Lifebuoy purchases are validated on the server.
-- Player Coins/Wins are persisted with DataStore.
-- Arena geometry and collectibles are generated procedurally, so the first playable build needs no external asset pack.
-- HUD is generated client-side and designed for mobile touch input.
+## Engineering
+- Luau.
+- Server-authoritative round, economy, purchases and rewards.
+- DataStore persistence for Coins, Wins and Rounds.
+- Rojo project layout.
+- Procedural arena: no external asset pack is required for the first playable build.
+- Client-only cosmetic effects are isolated from authoritative gameplay.
 
 ## Project structure
 ```text
 src/
-├── ReplicatedStorage/
-│   └── Config.lua
+├── ReplicatedStorage/Config.lua
 ├── ServerScriptService/
 │   ├── Main.server.lua
 │   ├── DataService.lua
@@ -35,25 +33,25 @@ src/
 │   ├── RoundService.lua
 │   ├── CoinService.lua
 │   ├── ShopService.lua
-│   └── FlushService.lua
-└── StarterPlayer/
-    └── StarterPlayerScripts/
-        └── HUD.client.lua
+│   ├── FlushService.lua
+│   └── HazardService.server.lua
+└── StarterPlayer/StarterPlayerScripts/
+    ├── HUD.client.lua
+    └── Effects.client.lua
 ```
 
-## Roblox Studio
+## Studio setup
 1. Install Rojo.
-2. Clone this repository.
+2. Clone the repository.
 3. Open a Roblox place in Studio.
-4. Start the Rojo server and connect the place using `default.project.json`.
-5. For DataStore testing in Studio, enable **Game Settings → Security → Enable Studio Access to API Services** in the test experience.
-6. Publish the experience before testing production DataStore behavior.
+4. Start Rojo and connect with `default.project.json`.
+5. Publish the experience before production testing.
+6. For DataStore testing in Studio, enable **Game Settings → Security → Enable Studio Access to API Services**.
 
-## Production roadmap
-- Replace primitive geometry with polished toilet/obstacle assets.
-- Add VFX, SFX, music and camera shake to make the final 20 seconds feel explosive.
-- Add more obstacle patterns and arena variants.
-- Add cosmetics, quests, streaks and daily rewards.
-- Add analytics events and economy balancing.
-- Add monetization only after the core loop demonstrates retention.
-- Profile server performance with realistic player counts before release.
+## Next production pass
+- Replace primitives with custom low-poly bathroom assets.
+- Add original SFX/music and flush audio cues.
+- Add stronger water VFX, particles and camera shake.
+- Add arena variants and rotating obstacle layouts.
+- Add quests, streaks, cosmetics and daily rewards.
+- Add analytics and economy balancing before monetization.
