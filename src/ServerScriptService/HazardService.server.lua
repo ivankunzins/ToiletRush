@@ -14,6 +14,10 @@ local obstacles = arena:WaitForChild("Obstacles")
 local animated = {}
 local hitAt = {}
 
+local function resetCombo(player)
+    player:SetAttribute("CoinCombo", 0)
+end
+
 local function damagePlayer(part, hit)
     local character = hit:FindFirstAncestorOfClass("Model")
     local player = character and Players:GetPlayerFromCharacter(character)
@@ -38,6 +42,7 @@ local function damagePlayer(part, hit)
 
     humanoid:TakeDamage(Config.Hazards.Damage)
     RoundStatsService:AddHazardHit(player, Config.Hazards.Damage)
+    resetCombo(player)
 
     local away = root.Position - part.Position
     local horizontal = Vector3.new(away.X, 0, away.Z)
