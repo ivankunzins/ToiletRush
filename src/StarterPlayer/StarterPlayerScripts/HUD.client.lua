@@ -41,7 +41,7 @@ local status = text("Status", UDim2.fromScale(0.62, 0.065), UDim2.fromScale(0.19
 local coins = text("Coins", UDim2.fromScale(0.23, 0.055), UDim2.fromScale(0.025, 0.035), "COINS 0", Enum.Font.GothamBlack, Color3.fromRGB(255, 225, 80))
 local wins = text("Wins", UDim2.fromScale(0.18, 0.045), UDim2.fromScale(0.025, 0.085), "WINS 0", Enum.Font.GothamBold)
 local streak = text("Streak", UDim2.fromScale(0.22, 0.045), UDim2.fromScale(0.025, 0.125), "STREAK 0", Enum.Font.GothamBold)
-local buoy = text("Buoy", UDim2.fromScale(0.29, 0.05), UDim2.fromScale(0.69, 0.035), "LIFEBOUY: NO", Enum.Font.GothamBlack)
+local buoy = text("Buoy", UDim2.fromScale(0.29, 0.05), UDim2.fromScale(0.69, 0.035), "LIFEBUOY: NO", Enum.Font.GothamBlack)
 
 local panel = Instance.new("Frame")
 panel.Name = "ProgressPanel"
@@ -73,7 +73,7 @@ shop.TextColor3 = Color3.new(1, 1, 1)
 shop.TextStrokeTransparency = 0.4
 shop.Font = Enum.Font.GothamBlack
 shop.TextScaled = true
-shop.Text = "BUY LIFEBOUY • 25 COINS"
+shop.Text = "BUY LIFEBUOY • 25 COINS"
 shop.Visible = false
 shop.Parent = gui
 local corner = Instance.new("UICorner")
@@ -105,18 +105,24 @@ local function pulse(button)
     local bigger = UDim2.new(original.X.Scale, original.X.Offset + 8, original.Y.Scale, original.Y.Offset + 4)
     TweenService:Create(button, TweenInfo.new(0.08), {Size = bigger}):Play()
     task.delay(0.08, function()
-        if button.Parent then TweenService:Create(button, TweenInfo.new(0.12), {Size = original}):Play() end
+        if button.Parent then
+            TweenService:Create(button, TweenInfo.new(0.12), {Size = original}):Play()
+        end
     end)
 end
 
 shop.Activated:Connect(function()
     pulse(shop)
-    if not player:GetAttribute("HasLifebuoy") then buyRemote:FireServer() end
+    if not player:GetAttribute("HasLifebuoy") then
+        buyRemote:FireServer()
+    end
 end)
 
 daily.Activated:Connect(function()
     pulse(daily)
-    if feedbackRemote then feedbackRemote:FireServer("CLAIM_DAILY") end
+    if feedbackRemote then
+        feedbackRemote:FireServer("CLAIM_DAILY")
+    end
 end)
 
 local function updateStats()
@@ -134,8 +140,10 @@ end
 
 local function updateBuoy()
     local has = player:GetAttribute("HasLifebuoy") == true
-    buoy.Text = has and "LIFEBOUY: READY" or "LIFEBOUY: NO"
-    if has then shop.Visible = false end
+    buoy.Text = has and "LIFEBUOY: READY" or "LIFEBUOY: NO"
+    if has then
+        shop.Visible = false
+    end
 end
 
 task.spawn(function()
@@ -148,6 +156,11 @@ end)
 
 player:GetAttributeChangedSignal("HasLifebuoy"):Connect(updateBuoy)
 
+local function formatSeconds(seconds)
+    seconds = math.max(0, math.floor(tonumber(seconds) or 0))
+    return string.format("%d:%02d", math.floor(seconds / 60), seconds % 60)
+end
+
 stateRemote.OnClientEvent:Connect(function(event, value, roundNumber)
     if event == "INTERMISSION" then
         timer.Text = "NEXT ROUND " .. tostring(value)
@@ -155,15 +168,15 @@ stateRemote.OnClientEvent:Connect(function(event, value, roundNumber)
         shop.Visible = false
     elseif event == "ROUND_START" then
         roundLabel.Text = "ROUND " .. tostring(roundNumber or 0)
-        timer.Text = "3:00"
+        timer.Text = formatSeconds(value)
         status.Text = "RUN! COLLECT COINS!"
         shop.Visible = false
         daily.Visible = false
     elseif event == "TICK" then
         local seconds = tonumber(value) or 0
-        timer.Text = string.format("%d:%02d", math.floor(seconds / 60), seconds % 60)
+        timer.Text = formatSeconds(seconds)
         if seconds <= Config.Round.LifebuoyWindow then
-            status.Text = "FLUSH IN " .. seconds .. "s • GET A LIFEBOUY!"
+            status.Text = "FLUSH IN " .. seconds .. "s • GET A LIFEBUOY!"
             shop.Visible = not player:GetAttribute("HasLifebuoy")
             if seconds <= 10 then
                 TweenService:Create(timer, TweenInfo.new(0.15), {Rotation = (seconds % 2 == 0) and -2 or 2}):Play()
@@ -193,12 +206,16 @@ if feedbackRemote then
         if kind == "DAILY_SUCCESS" then
             daily.Text = tostring(message)
             task.delay(2.5, function()
-                if daily.Parent then daily.Text = "DAILY REWARD" end
+                if daily.Parent then
+                    daily.Text = "DAILY REWARD"
+                end
             end)
         elseif kind == "DAILY_ERROR" then
             daily.Text = tostring(message)
             task.delay(1.5, function()
-                if daily.Parent then daily.Text = "DAILY REWARD" end
+                if daily.Parent then
+                    daily.Text = "DAILY REWARD"
+                end
             end)
         end
     end)
@@ -207,7 +224,10 @@ end
 local cameraConnection
 local function fitMobile()
     local camera = workspace.CurrentCamera
-    if not camera then return end
+    if not camera then
+        return
+    end
+
     local viewport = camera.ViewportSize
     if viewport.X < 700 then
         scale.Scale = 0.72
@@ -219,7 +239,10 @@ local function fitMobile()
         scale.Scale = 1
         panel.Visible = true
     end
-    if cameraConnection then cameraConnection:Disconnect() end
+
+    if cameraConnection then
+        cameraConnection:Disconnect()
+    end
     cameraConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(fitMobile)
 end
 
