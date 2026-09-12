@@ -4,12 +4,20 @@ local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local ShopService = {}
 local purchased = {}
 local requestAt = {}
+local feedback = nil
+
+local function notify(player, kind, text)
+    if feedback then
+        feedback:FireClient(player, kind, text)
+    end
+end
 
 local function addBuoy(player)
     local character = player.Character
     if not character or character:FindFirstChild("LifebuoyVisual") then return end
     local root = character:FindFirstChild("HumanoidRootPart")
     if not root then return end
+
     local ring = Instance.new("Part")
     ring.Name = "LifebuoyVisual"
     ring.Shape = Enum.PartType.Cylinder
@@ -18,9 +26,11 @@ local function addBuoy(player)
     ring.Material = Enum.Material.Neon
     ring.CanCollide = false
     ring.CanTouch = false
+    ring.CanQuery = false
     ring.Massless = true
     ring.CFrame = root.CFrame * CFrame.new(0, -0.6, 0)
     ring.Parent = character
+
     local weld = Instance.new("WeldConstraint")
     weld.Part0 = ring
     weld.Part1 = root
@@ -30,24 +40,43 @@ end
 function ShopService:Reset()
     purchased = {}
     requestAt = {}
+    for _, player in game:GetService("Players"):GetPlayers() do
+        player:SetAttribute("HasLifebuoy", false)
+    end
 end
 
 function ShopService:HasLifebuoy(player)
     return purchased[player] == true
 end
 
-function ShopService:Bind(remote, dataService, roundService)
+function ShopService:Bind(remote, dataService, roundService, feedbackRemote)
+    feedback = feedbackRemote
     remote.OnServerEvent:Connect(function(player)
         local now = os.clock()
         if now - (requestAt[player] or 0) < 0.4 then return end
         requestAt[player] = now
-        if roundService.State ~= "ROUND" then return end
-        if roundService:GetTimeLeft() > Config.Round.LifebuoyWindow then return end
-        if self:HasLifebuoy(player) then return end
+
+        if roundService.State ~= "ROUND" then
+            notify(player, "SHOP", "Магазин откроется в конце раунда")
+            return
+        end
+        local timeLeft = roundService:GetTimeLeft()
+        if timeLeft > Config.Round.LifebuoyWindow then
+            notify(player, "SHOP", "🛟 Спасательный круг доступен последние 20 секунд")
+            return
+        end
+        if self:HasLifebuoy(player) then
+            notify(player, "SHOP", "🛟 Круг уже куплен")
+            return
+        end
+
         if dataService:SpendCoins(player, Config.Economy.LifebuoyCost) then
             purchased[player] = true
             player:SetAttribute("HasLifebuoy", true)
             addBuoy(player)
+            notify(player, "SHOP_SUCCESS", "🛟 СПАСАТЕЛЬНЫЙ КРУГ КУПЛЕН!")
+        else
+            notify(player, "SHOP_ERROR", "❌ Нужно 25 монет")
         end
     end)
 end
