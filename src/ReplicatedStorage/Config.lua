@@ -25,6 +25,10 @@ Config.Progression = {
     ParticipationXP = 15,
     LevelBaseXP = 100,
     LevelGrowthXP = 50,
+    ComboWindow = 4,
+    ComboMax = 10,
+    ComboXPPerStack = 1,
+    ComboCoinBonusPerStack = 0.10,
 }
 
 Config.World = {
