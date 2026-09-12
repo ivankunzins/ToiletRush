@@ -12,14 +12,17 @@ local BASE = "https://raw.githubusercontent.com/ivankunzins/ToiletRush/main/"
 
 local files = {
     {path = "src/ReplicatedStorage/Config.lua", parent = ReplicatedStorage, name = "Config", className = "ModuleScript"},
+    {path = "src/ServerScriptService/AchievementService.lua", parent = ServerScriptService, name = "AchievementService", className = "ModuleScript"},
     {path = "src/ServerScriptService/CoinService.lua", parent = ServerScriptService, name = "CoinService", className = "ModuleScript"},
     {path = "src/ServerScriptService/DataService.lua", parent = ServerScriptService, name = "DataService", className = "ModuleScript"},
     {path = "src/ServerScriptService/FlushService.lua", parent = ServerScriptService, name = "FlushService", className = "ModuleScript"},
     {path = "src/ServerScriptService/HazardService.server.lua", parent = ServerScriptService, name = "HazardService", className = "Script"},
     {path = "src/ServerScriptService/Main.server.lua", parent = ServerScriptService, name = "Main", className = "Script"},
     {path = "src/ServerScriptService/RoundService.lua", parent = ServerScriptService, name = "RoundService", className = "ModuleScript"},
+    {path = "src/ServerScriptService/RoundStatsService.lua", parent = ServerScriptService, name = "RoundStatsService", className = "ModuleScript"},
     {path = "src/ServerScriptService/ShopService.lua", parent = ServerScriptService, name = "ShopService", className = "ModuleScript"},
     {path = "src/ServerScriptService/WorldBuilder.lua", parent = ServerScriptService, name = "WorldBuilder", className = "ModuleScript"},
+    {path = "src/StarterPlayer/StarterPlayerScripts/Achievements.client.lua", parent = StarterPlayerScripts, name = "Achievements", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Effects.client.lua", parent = StarterPlayerScripts, name = "Effects", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/HUD.client.lua", parent = StarterPlayerScripts, name = "HUD", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Feedback.client.lua", parent = StarterPlayerScripts, name = "Feedback", className = "LocalScript"},
