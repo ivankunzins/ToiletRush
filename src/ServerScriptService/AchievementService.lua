@@ -6,12 +6,12 @@ local feedback = nil
 
 AchievementService.Definitions = {
     FIRST_WIN = {Name = "First Flush", Description = "Survive your first BIG FLUSH", Reward = 25},
-    COIN_HUNTER = {Name = "Coin Hunter", Description = "Collect 20 coins in one round", Reward = 20},
-    RARE_HUNTER = {Name = "Rare Hunter", Description = "Collect 3 rare +5 coins in one round", Reward = 30},
+    COIN_HUNTER = {Name = "Coin Hunter", Description = "Collect 20 points in one round", Reward = 20},
+    RARE_HUNTER = {Name = "Rare Hunter", Description = "Collect 3 rare +10 coins in one round", Reward = 30},
     CLEAN_RUN = {Name = "Clean Run", Description = "Survive a round without taking hazard damage", Reward = 35},
     STREAK_3 = {Name = "Hot Streak", Description = "Win 3 rounds in a row", Reward = 50},
     STREAK_5 = {Name = "Unstoppable", Description = "Win 5 rounds in a row", Reward = 100},
-    COIN_MASTER = {Name = "Coin Master", Description = "Collect 50 coins in one round", Reward = 75},
+    COIN_MASTER = {Name = "Coin Master", Description = "Collect 50 points in one round", Reward = 75},
 }
 
 local function notify(player, achievement)
