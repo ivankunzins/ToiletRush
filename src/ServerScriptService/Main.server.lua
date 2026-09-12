@@ -29,9 +29,11 @@ local stateRemote = remote("GameState")
 local buyRemote = remote("BuyLifebuoy")
 local feedbackRemote = remote("Feedback")
 local achievementRemote = remote("Achievements")
+local lobbyRemote = remote("LobbyAction")
 
 local dailyRequestAt = {}
 local achievementRequestAt = {}
+local lobbyRequestAt = {}
 
 feedbackRemote.OnServerEvent:Connect(function(player, action)
     if action ~= "CLAIM_DAILY" then
@@ -75,21 +77,47 @@ achievementRemote.OnServerEvent:Connect(function(player, action)
     achievementRemote:FireClient(player, "LIST", AchievementService:GetForPlayer(player))
 end)
 
+lobbyRemote.OnServerEvent:Connect(function(player, action)
+    if action ~= "PLAY" and action ~= "LEAVE" then
+        return
+    end
+
+    local now = os.clock()
+    if now - (lobbyRequestAt[player] or 0) < 0.5 then
+        return
+    end
+    lobbyRequestAt[player] = now
+
+    -- A player may only change queue state outside an active round.
+    if player:GetAttribute("RoundActive") == true then
+        return
+    end
+
+    local queued = action == "PLAY"
+    player:SetAttribute("Queued", queued)
+    player:SetAttribute("LobbyStatus", queued and "QUEUED" or "LOBBY")
+    lobbyRemote:FireClient(player, "QUEUE", queued)
+end)
+
 Players.PlayerAdded:Connect(function(player)
     player:SetAttribute("HasLifebuoy", false)
     player:SetAttribute("RoundActive", false)
     player:SetAttribute("FlushActive", false)
     player:SetAttribute("Eliminated", false)
     player:SetAttribute("LastRoundSurvived", false)
+    player:SetAttribute("Queued", false)
+    player:SetAttribute("LobbyStatus", "LOBBY")
 
     task.defer(function()
         RoundService:SyncPlayer(player, stateRemote)
+        lobbyRemote:FireClient(player, "QUEUE", player:GetAttribute("Queued") == true)
     end)
 end)
 
 Players.PlayerRemoving:Connect(function(player)
     dailyRequestAt[player] = nil
     achievementRequestAt[player] = nil
+    lobbyRequestAt[player] = nil
 end)
 
 local arena = WorldBuilder:Build()
