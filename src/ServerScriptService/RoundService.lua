@@ -6,6 +6,7 @@ local RoundStatsService = require(game.ServerScriptService:WaitForChild("RoundSt
 local RoundService = {}
 RoundService.State = "INTERMISSION"
 RoundService.EndAt = 0
+RoundService.PhaseEndAt = 0
 RoundService.RoundNumber = 0
 
 function RoundService:GetTimeLeft()
@@ -13,6 +14,24 @@ function RoundService:GetTimeLeft()
         return 0
     end
     return math.max(0, math.ceil(self.EndAt - os.clock()))
+end
+
+function RoundService:SyncPlayer(player, stateRemote)
+    if not player.Parent then
+        return
+    end
+
+    if self.State == "INTERMISSION" then
+        local remaining = math.max(0, math.ceil(self.PhaseEndAt - os.clock()))
+        stateRemote:FireClient(player, "INTERMISSION", remaining)
+    elseif self.State == "ROUND" then
+        stateRemote:FireClient(player, "ROUND_START", Config.Round.Duration, self.RoundNumber)
+        stateRemote:FireClient(player, "TICK", self:GetTimeLeft())
+    elseif self.State == "FLUSH" then
+        local remaining = math.max(0, math.ceil(self.PhaseEndAt - os.clock()))
+        stateRemote:FireClient(player, "FLUSH_START", Config.Flush.Duration)
+        stateRemote:FireClient(player, "FLUSH_TICK", remaining)
+    end
 end
 
 local function teleportPlayer(player, index, arena)
@@ -43,10 +62,13 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
     while true do
         self.State = "INTERMISSION"
         self.EndAt = 0
+        self.PhaseEndAt = os.clock() + Config.Round.Intermission
+
         for remaining = Config.Round.Intermission, 1, -1 do
             stateRemote:FireAllClients("INTERMISSION", remaining)
             task.wait(1)
         end
+        self.PhaseEndAt = 0
 
         local players = Players:GetPlayers()
         if #players < Config.Round.MinimumPlayers then
@@ -79,6 +101,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         coinService:Start(arena, dataService)
         self.State = "ROUND"
         self.EndAt = os.clock() + Config.Round.Duration
+        self.PhaseEndAt = self.EndAt
         stateRemote:FireAllClients("ROUND_START", Config.Round.Duration, self.RoundNumber)
 
         while self:GetTimeLeft() > 0 do
@@ -89,6 +112,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
 
         self.State = "FLUSH"
         self.EndAt = 0
+        self.PhaseEndAt = os.clock() + Config.Flush.Duration
         coinService:Stop()
         for _, player in Players:GetPlayers() do
             if player:GetAttribute("RoundActive") == true then
@@ -98,6 +122,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
 
         stateRemote:FireAllClients("FLUSH_WARNING")
         flushService:Run(arena, shopService, dataService, stateRemote)
+        self.PhaseEndAt = 0
 
         -- FlushService determines the result and pays the round reward.
         -- RoundService is the only place that records the round in persistent stats.
