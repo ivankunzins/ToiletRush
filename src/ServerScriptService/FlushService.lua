@@ -59,7 +59,12 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
             local root = rootOf(player)
             local humanoid = humanoidOf(player)
             if root and humanoid and humanoid.Health > 0 then
-                if shopService:HasLifebuoy(player) then
+                -- Reaching the throne is the other way to survive a manual flush.
+                if player:GetAttribute("ReachedTop") == true then
+                    humanoid.AutoRotate = false
+                    root.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
+                    root.AssemblyAngularVelocity = Vector3.new(0, 1.5, 0)
+                elseif shopService:HasLifebuoy(player) then
                     humanoid.AutoRotate = false
                     local phase = player.UserId % 20
                     local orbit = Vector3.new(
@@ -106,7 +111,8 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
 
         local humanoid = humanoidOf(player)
         local alive = humanoid and humanoid.Health > 0
-        local survived = alive and shopService:HasLifebuoy(player)
+        local reachedTop = player:GetAttribute("ReachedTop") == true
+        local survived = alive and (reachedTop or shopService:HasLifebuoy(player))
         if survived then
             survivedCount += 1
         end
