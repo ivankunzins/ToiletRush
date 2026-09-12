@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local WorldBuilder = require(ServerScriptService:WaitForChild("WorldBuilder"))
+local BathroomArchitecture = require(ServerScriptService:WaitForChild("BathroomArchitecture"))
 local DataService = require(ServerScriptService:WaitForChild("DataService"))
 local CoinService = require(ServerScriptService:WaitForChild("CoinService"))
 local ShopService = require(ServerScriptService:WaitForChild("ShopService"))
@@ -88,7 +89,6 @@ lobbyRemote.OnServerEvent:Connect(function(player, action)
     end
     lobbyRequestAt[player] = now
 
-    -- A player may only change queue state outside an active round.
     if player:GetAttribute("RoundActive") == true then
         return
     end
@@ -101,6 +101,7 @@ end)
 
 Players.PlayerAdded:Connect(function(player)
     player:SetAttribute("HasLifebuoy", false)
+    player:SetAttribute("LifebuoyUnlocked", false)
     player:SetAttribute("RoundActive", false)
     player:SetAttribute("FlushActive", false)
     player:SetAttribute("Eliminated", false)
@@ -121,13 +122,15 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 local arena = WorldBuilder:Build()
+BathroomArchitecture:Apply(arena)
 AchievementService:Bind(DataService, feedbackRemote)
 ShopService:Bind(buyRemote, DataService, RoundService, feedbackRemote)
 CoinService:BindFeedback(feedbackRemote)
 
-print(("[ToiletRush] Arena ready. Round=%ss, Lifebuoy window=%ss, cost=%s coins"):format(
+print(("[ToiletRush] Arena ready. Round=%ss, Lifebuoy window=%ss, collect=%s points, cost=%s coins"):format(
     Config.Round.Duration,
     Config.Round.LifebuoyWindow,
+    Config.Economy.LifebuoyUnlockCollected,
     Config.Economy.LifebuoyCost
 ))
 
