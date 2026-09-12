@@ -79,9 +79,15 @@ end
 
 local function toiletPipe(parent, y0, y1, radius)
     -- Open porcelain shaft: it visually reads as climbing OUT of the toilet drain.
+    -- Front and back openings line up with the staircase so the player can actually leave the hole.
     local segments = 24
     for i = 1, segments do
         local a = (i / segments) * math.pi * 2
+        local frontGap = math.abs(math.atan2(math.sin(a - math.pi / 2), math.cos(a - math.pi / 2)))
+        local backGap = math.abs(math.atan2(math.sin(a + math.pi / 2), math.cos(a + math.pi / 2)))
+        if frontGap <= 0.38 or backGap <= 0.38 then
+            continue
+        end
         local wall = part(
             parent,
             "PorcelainPipe",
