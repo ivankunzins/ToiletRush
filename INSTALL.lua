@@ -23,6 +23,7 @@ local files = {
     {path = "src/ServerScriptService/RoundStatsService.lua", parent = ServerScriptService, name = "RoundStatsService", className = "ModuleScript"},
     {path = "src/ServerScriptService/ShopService.lua", parent = ServerScriptService, name = "ShopService", className = "ModuleScript"},
     {path = "src/ServerScriptService/UpperCourseBuilder.lua", parent = ServerScriptService, name = "UpperCourseBuilder", className = "ModuleScript"},
+    {path = "src/ServerScriptService/VisualEffectsBuilder.lua", parent = ServerScriptService, name = "VisualEffectsBuilder", className = "ModuleScript"},
     {path = "src/ServerScriptService/WorldBuilder.lua", parent = ServerScriptService, name = "WorldBuilder", className = "ModuleScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Achievements.client.lua", parent = StarterPlayerScripts, name = "Achievements", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Audio.client.lua", parent = StarterPlayerScripts, name = "Audio", className = "LocalScript"},
