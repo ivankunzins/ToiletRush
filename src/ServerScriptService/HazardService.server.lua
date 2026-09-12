@@ -3,13 +3,13 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local Config = require(game.ReplicatedStorage:WaitForChild("Config"))
+local RoundStatsService = require(game.ServerScriptService:WaitForChild("RoundStatsService"))
 
 local arena = Workspace:WaitForChild("ToiletArena", 30)
 if not arena then return end
 local obstacles = arena:WaitForChild("Obstacles")
 local animated = {}
 local hitAt = {}
-local roundStats = nil
 
 local function damagePlayer(part, hit)
     local character = hit:FindFirstAncestorOfClass("Model")
@@ -24,7 +24,7 @@ local function damagePlayer(part, hit)
     hitAt[player][part] = now
 
     humanoid:TakeDamage(Config.Hazards.Damage)
-    if roundStats then roundStats:AddHazardHit(player, Config.Hazards.Damage) end
+    RoundStatsService:AddHazardHit(player, Config.Hazards.Damage)
 
     local away = root.Position - part.Position
     local horizontal = Vector3.new(away.X, 0, away.Z)
@@ -52,12 +52,9 @@ for _, object in obstacles:GetChildren() do
     end
 end
 
-function _G.ToiletRushBindRoundStats(service)
-    roundStats = service
-end
-
 Players.PlayerRemoving:Connect(function(player)
     hitAt[player] = nil
+    RoundStatsService:Remove(player)
 end)
 
 RunService.Heartbeat:Connect(function()
