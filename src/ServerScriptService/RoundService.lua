@@ -5,6 +5,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local RoundService = {}
 RoundService.State = "INTERMISSION"
 RoundService.EndAt = 0
+RoundService.RoundNumber = 0
 
 function RoundService:GetTimeLeft()
     if self.State ~= "ROUND" then return 0 end
@@ -12,41 +13,49 @@ function RoundService:GetTimeLeft()
 end
 
 local function teleportPlayer(player, index, arena)
-    if not player.Character then player:LoadCharacter() end
+    if not player.Character then
+        player:LoadCharacter()
+    end
     local character = player.Character or player.CharacterAdded:Wait()
-    local root = character:WaitForChild("HumanoidRootPart", 5)
+    local root = character:WaitForChild("HumanoidRootPart", 8)
     local spawns = arena:WaitForChild("Spawns"):GetChildren()
     if root and #spawns > 0 then
         local spawn = spawns[((index - 1) % #spawns) + 1]
         root.CFrame = spawn.CFrame + Vector3.new(0, 4, 0)
+        root.AssemblyLinearVelocity = Vector3.zero
     end
 end
 
 function RoundService:Run(arena, stateRemote, coinService, shopService, flushService, dataService)
     while true do
         self.State = "INTERMISSION"
-        stateRemote:FireAllClients("INTERMISSION", Config.Round.Intermission)
-        task.wait(Config.Round.Intermission)
+        for remaining = Config.Round.Intermission, 1, -1 do
+            stateRemote:FireAllClients("INTERMISSION", remaining)
+            task.wait(1)
+        end
 
         local players = Players:GetPlayers()
         if #players < Config.Round.MinimumPlayers then
-            task.wait(2)
+            task.wait(1)
             continue
         end
 
+        self.RoundNumber += 1
         shopService:Reset()
         for i, player in ipairs(players) do
             player:SetAttribute("HasLifebuoy", false)
+            player:SetAttribute("RoundActive", true)
             teleportPlayer(player, i, arena)
         end
 
         coinService:Start(arena, dataService)
         self.State = "ROUND"
         self.EndAt = os.clock() + Config.Round.Duration
-        stateRemote:FireAllClients("ROUND_START", Config.Round.Duration)
+        stateRemote:FireAllClients("ROUND_START", Config.Round.Duration, self.RoundNumber)
 
         while self:GetTimeLeft() > 0 do
-            stateRemote:FireAllClients("TICK", self:GetTimeLeft())
+            local left = self:GetTimeLeft()
+            stateRemote:FireAllClients("TICK", left)
             task.wait(1)
         end
 
@@ -55,7 +64,10 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         stateRemote:FireAllClients("FLUSH_WARNING")
         flushService:Run(arena, shopService, dataService, stateRemote)
 
-        task.wait(5)
+        for _, player in Players:GetPlayers() do
+            player:SetAttribute("RoundActive", false)
+        end
+        task.wait(Config.Round.ResultsDuration)
     end
 end
 
