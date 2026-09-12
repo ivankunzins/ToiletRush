@@ -17,6 +17,7 @@ local DEFAULT = {
     CurrentStreak = 0,
     DailyClaim = 0,
     DailyStreak = 0,
+    XP = 0,
     Achievements = {},
 }
 
@@ -29,8 +30,24 @@ local function cloneDefault()
         CurrentStreak = 0,
         DailyClaim = 0,
         DailyStreak = 0,
+        XP = 0,
         Achievements = {},
     }
+end
+
+local function levelForXP(xp)
+    xp = math.max(0, math.floor(xp or 0))
+    local level = 1
+    local spent = 0
+    while level < 1000 do
+        local needed = Config.Progression.LevelBaseXP + (level - 1) * Config.Progression.LevelGrowthXP
+        if xp < spent + needed then
+            break
+        end
+        spent += needed
+        level += 1
+    end
+    return level, spent
 end
 
 local function sync(player)
@@ -56,10 +73,17 @@ local function sync(player)
     setInt("Rounds", data.Rounds)
     setInt("BestStreak", data.BestStreak)
 
+    local level, spent = levelForXP(data.XP)
+    local nextXP = Config.Progression.LevelBaseXP + (level - 1) * Config.Progression.LevelGrowthXP
+
     player:SetAttribute("RoundsPlayed", data.Rounds)
     player:SetAttribute("WinStreak", data.CurrentStreak)
     player:SetAttribute("BestStreak", data.BestStreak)
     player:SetAttribute("DailyStreak", data.DailyStreak)
+    player:SetAttribute("XP", data.XP)
+    player:SetAttribute("Level", level)
+    player:SetAttribute("LevelXP", math.max(0, data.XP - spent))
+    player:SetAttribute("LevelNextXP", nextXP)
 end
 
 function DataService:Get(player)
@@ -91,6 +115,22 @@ function DataService:SpendCoins(player, amount)
     data.Coins -= cost
     sync(player)
     return true
+end
+
+function DataService:AddXP(player, amount)
+    if type(amount) ~= "number" or amount <= 0 then
+        return false, false, 0
+    end
+    local data = profiles[player]
+    if not data then
+        return false, false, 0
+    end
+
+    local oldLevel = levelForXP(data.XP)
+    data.XP += math.max(1, math.floor(amount))
+    local newLevel = levelForXP(data.XP)
+    sync(player)
+    return true, newLevel > oldLevel, newLevel
 end
 
 function DataService:MarkRound(player, survived)
@@ -163,6 +203,7 @@ local function makePayload(data)
         CurrentStreak = data.CurrentStreak,
         DailyClaim = data.DailyClaim,
         DailyStreak = data.DailyStreak,
+        XP = data.XP,
         Achievements = data.Achievements,
     }
 end
@@ -226,7 +267,7 @@ local function load(player)
         loadFailed[player] = true
         warn("[ToiletRush] Data load failed for " .. player.Name .. ". Player will not be saved this session.")
     elseif type(saved) == "table" then
-        for _, key in ipairs({"Coins", "Wins", "Rounds", "BestStreak", "CurrentStreak", "DailyClaim", "DailyStreak"}) do
+        for _, key in ipairs({"Coins", "Wins", "Rounds", "BestStreak", "CurrentStreak", "DailyClaim", "DailyStreak", "XP"}) do
             if type(saved[key]) == "number" then
                 data[key] = math.max(0, math.floor(saved[key]))
             end
