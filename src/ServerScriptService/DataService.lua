@@ -35,14 +35,19 @@ end
 
 local function sync(player)
     local data = profiles[player]
-    if not data then return end
+    if not data or not player.Parent then
+        return
+    end
+
     local stats = player:FindFirstChild("leaderstats")
-    if not stats then return end
+    if not stats then
+        return
+    end
 
     local function setInt(name, value)
         local obj = stats:FindFirstChild(name) or Instance.new("IntValue")
         obj.Name = name
-        obj.Value = value
+        obj.Value = math.max(0, math.floor(value or 0))
         obj.Parent = stats
     end
 
@@ -62,28 +67,40 @@ function DataService:Get(player)
 end
 
 function DataService:AddCoins(player, amount)
-    if type(amount) ~= "number" or amount <= 0 then return false end
+    if type(amount) ~= "number" or amount <= 0 then
+        return false
+    end
     local data = profiles[player]
-    if not data then return false end
+    if not data then
+        return false
+    end
     data.Coins += math.floor(amount)
     sync(player)
     return true
 end
 
 function DataService:SpendCoins(player, amount)
-    if type(amount) ~= "number" or amount <= 0 then return false end
+    if type(amount) ~= "number" or amount <= 0 then
+        return false
+    end
     local data = profiles[player]
-    if not data or data.Coins < amount then return false end
-    data.Coins -= math.floor(amount)
+    local cost = math.floor(amount)
+    if not data or data.Coins < cost then
+        return false
+    end
+    data.Coins -= cost
     sync(player)
     return true
 end
 
 function DataService:MarkRound(player, survived)
     local data = profiles[player]
-    if not data then return end
+    if not data then
+        return false
+    end
+
     data.Rounds += 1
-    if survived then
+    if survived == true then
         data.Wins += 1
         data.CurrentStreak += 1
         data.BestStreak = math.max(data.BestStreak, data.CurrentStreak)
@@ -91,13 +108,17 @@ function DataService:MarkRound(player, survived)
         data.CurrentStreak = 0
     end
     sync(player)
+    return true
 end
 
 function DataService:UnlockAchievement(player, id, reward)
     local data = profiles[player]
-    if not data or type(id) ~= "string" or data.Achievements[id] then return false end
+    if not data or type(id) ~= "string" or data.Achievements[id] then
+        return false
+    end
+
     data.Achievements[id] = true
-    if reward and reward > 0 then
+    if type(reward) == "number" and reward > 0 then
         data.Coins += math.floor(reward)
     end
     sync(player)
@@ -106,20 +127,26 @@ end
 
 function DataService:HasAchievement(player, id)
     local data = profiles[player]
-    return data and data.Achievements[id] == true
+    return data ~= nil and data.Achievements[id] == true
 end
 
 function DataService:ClaimDaily(player)
     local data = profiles[player]
-    if not data then return false, 0 end
+    if not data then
+        return false, 0
+    end
+
     local day = math.floor(os.time() / 86400)
-    if data.DailyClaim == day then return false, 0 end
+    if data.DailyClaim == day then
+        return false, 0
+    end
 
     if data.DailyClaim == day - 1 then
         data.DailyStreak += 1
     else
         data.DailyStreak = 1
     end
+
     data.DailyClaim = day
     local reward = math.min(25 + (data.DailyStreak - 1) * 5, 75)
     data.Coins += reward
@@ -127,13 +154,8 @@ function DataService:ClaimDaily(player)
     return true, reward
 end
 
-local function write(player, removeAfter)
-    if saving[player] or loadFailed[player] then return false end
-    local data = profiles[player]
-    if not data then return false end
-
-    saving[player] = true
-    local payload = {
+local function makePayload(data)
+    return {
         Coins = data.Coins,
         Wins = data.Wins,
         Rounds = data.Rounds,
@@ -143,7 +165,34 @@ local function write(player, removeAfter)
         DailyStreak = data.DailyStreak,
         Achievements = data.Achievements,
     }
+end
 
+local function write(player, removeAfter, waitForExistingSave)
+    if loadFailed[player] then
+        return false
+    end
+
+    if saving[player] then
+        if not waitForExistingSave then
+            return false
+        end
+        local deadline = os.clock() + 10
+        while saving[player] and os.clock() < deadline do
+            task.wait()
+        end
+        if saving[player] then
+            warn("[ToiletRush] Previous save did not finish for " .. player.Name)
+            return false
+        end
+    end
+
+    local data = profiles[player]
+    if not data then
+        return false
+    end
+
+    saving[player] = true
+    local payload = makePayload(data)
     local ok, err = pcall(function()
         Store:UpdateAsync("p_" .. player.UserId, function()
             return payload
@@ -164,6 +213,10 @@ local function write(player, removeAfter)
 end
 
 local function load(player)
+    if profiles[player] then
+        return
+    end
+
     local data = cloneDefault()
     local ok, saved = pcall(function()
         return Store:GetAsync("p_" .. player.UserId)
@@ -192,8 +245,12 @@ local function load(player)
 end
 
 Players.PlayerAdded:Connect(load)
+for _, player in Players:GetPlayers() do
+    task.spawn(load, player)
+end
+
 Players.PlayerRemoving:Connect(function(player)
-    write(player, true)
+    write(player, true, true)
 end)
 
 task.spawn(function()
@@ -201,7 +258,7 @@ task.spawn(function()
         task.wait(60)
         for _, player in Players:GetPlayers() do
             task.spawn(function()
-                write(player, false)
+                write(player, false, false)
             end)
         end
     end
@@ -209,7 +266,7 @@ end)
 
 game:BindToClose(function()
     for _, player in Players:GetPlayers() do
-        write(player, true)
+        write(player, true, true)
     end
 end)
 
