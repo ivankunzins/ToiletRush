@@ -32,7 +32,8 @@ local function part(parent, name, size, cf, material, color, collide, shape)
 end
 
 local function cylinder(parent, name, diameter, height, cf, material, color, collide)
-    return part(parent, name, Vector3.new(diameter, height, diameter), cf, material, color, collide, Enum.PartType.Cylinder)
+    -- Roblox cylinders use the X axis as their long axis; rotate it upright for bathroom props/buttons.
+    return part(parent, name, Vector3.new(height, diameter, diameter), cf * CFrame.Angles(0, 0, math.rad(90)), material, color, collide, Enum.PartType.Cylinder)
 end
 
 local function hazard(p, motion, speed, distance)
@@ -78,16 +79,13 @@ local function floorSign(parent, floor, position, subtitle)
 end
 
 local function toiletPipe(parent, y0, y1, radius)
-    -- Open porcelain shaft: it visually reads as climbing OUT of the toilet drain.
-    -- Front and back openings line up with the staircase so the player can actually leave the hole.
+    -- Leave two openings on the X axis so the long stair route can pass through the shaft.
     local segments = 24
     for i = 1, segments do
         local a = (i / segments) * math.pi * 2
-        local frontGap = math.abs(math.atan2(math.sin(a - math.pi / 2), math.cos(a - math.pi / 2)))
-        local backGap = math.abs(math.atan2(math.sin(a + math.pi / 2), math.cos(a + math.pi / 2)))
-        if frontGap <= 0.38 or backGap <= 0.38 then
-            continue
-        end
+        local gapA = math.abs(math.atan2(math.sin(a), math.cos(a)))
+        local gapB = math.abs(math.atan2(math.sin(a - math.pi), math.cos(a - math.pi)))
+        if gapA <= 0.38 or gapB <= 0.38 then continue end
         local wall = part(parent, "PorcelainPipe", Vector3.new(3.8, y1 - y0, 12), CFrame.new(math.cos(a) * radius, (y0 + y1) / 2, math.sin(a) * radius) * CFrame.Angles(0, -a, 0), Enum.Material.Marble, PORCELAIN, true)
         wall.CanTouch = false
     end
@@ -106,7 +104,6 @@ local function ringFloor(parent, floor, y, radius, gapAngle)
             platform:SetAttribute("UpperRoute", true)
         end
     end
-
     for i = 1, segments do
         local a = (i - 1) * segmentAngle
         local x, z = math.cos(a) * (radius + 8), math.sin(a) * (radius + 8)
@@ -114,21 +111,23 @@ local function ringFloor(parent, floor, y, radius, gapAngle)
     end
 end
 
-local function stairRun(parent, fromY, toY, x, zStart, zEnd, side)
-    local count = 12
+local function stairRun(parent, fromY, toY, xStart, zStart, xEnd, zEnd, side)
+    local dx, dz = xEnd - xStart, zEnd - zStart
+    local length = math.sqrt(dx * dx + dz * dz)
+    local count = math.max(10, math.ceil(length / 7))
+    local stepLength = length / count
+    local yaw = math.atan2(dx, dz)
+
     for i = 1, count do
         local t = i / count
         local y = fromY + (toY - fromY) * t
-        local z = zStart + (zEnd - zStart) * t
-        local step = part(parent, "UPStep", Vector3.new(18, 2.2, math.abs(zEnd - zStart) / count + 1.2), CFrame.new(x, y, z), Enum.Material.Marble, WHITE, true)
+        local x = xStart + dx * t
+        local z = zStart + dz * t
+        local step = part(parent, "UPStep", Vector3.new(18, 2.2, stepLength + 1.2), CFrame.new(x, y, z) * CFrame.Angles(0, yaw, 0), Enum.Material.Marble, WHITE, true)
         step:SetAttribute("UpperRoute", true)
         if i % 3 == 1 then
-            guideArrow(parent, Vector3.new(x, y + 1.2, z), Vector3.new(3, 0.5, 4), side == 1 and 0 or math.pi)
+            guideArrow(parent, Vector3.new(x, y + 1.2, z), Vector3.new(3, 0.5, 4), side == 1 and yaw or yaw + math.pi)
         end
-    end
-    for _, dx in ipairs({-10, 10}) do
-        local rail = part(parent, "StairRail", Vector3.new(1.2, 5, math.abs(zEnd - zStart) + 4), CFrame.new(x + dx, (fromY + toY) / 2 + 2.5, (zStart + zEnd) / 2), Enum.Material.Metal, BLUE, true)
-        rail.CanTouch = false
     end
 end
 
@@ -141,7 +140,7 @@ local function addMop(obstacles, position, length, speed)
 end
 
 local function addPaper(obstacles, position, rotation)
-    local roll = cylinder(obstacles, "PaperRoll", 9, 26, CFrame.new(position) * CFrame.Angles(0, 0, math.rad(90)), Enum.Material.Fabric, WHITE, true)
+    local roll = cylinder(obstacles, "PaperRoll", 9, 26, CFrame.new(position), Enum.Material.Fabric, WHITE, true)
     roll.CFrame *= CFrame.Angles(0, rotation or 0, 0)
     hazard(roll, "SWEEP", 0.65, 12)
 end
@@ -153,29 +152,24 @@ function UpperCourseBuilder:Apply(arena)
     local course = Instance.new("Folder")
     course.Name = "UpperCourse"
     course.Parent = arena
-
     local obstacles = arena:WaitForChild("Obstacles")
 
-    -- The central porcelain shaft is the main visual idea: you climb out of the toilet hole.
     toiletPipe(course, 13, 69, 17)
-
-    -- Three circular floors with one obvious staircase at each transition.
     ringFloor(course, 1, 22, 62, math.rad(180))
     ringFloor(course, 2, 40, 52, math.rad(0))
     ringFloor(course, 3, 58, 42, math.rad(180))
 
-    stairRun(course, 14, 22, 0, 70, 55, 1)
-    stairRun(course, 22, 40, 0, -55, -35, -1)
-    stairRun(course, 40, 58, 0, 35, 18, 1)
-    stairRun(course, 58, 72, 0, 18, -5, -1)
+    -- The stairs now terminate exactly at the floor gaps: -X -> +X -> -X -> top.
+    stairRun(course, 14, 22, -82, 0, -62, 0, 1)
+    stairRun(course, 22, 40, -62, 0, 52, 0, 1)
+    stairRun(course, 40, 58, 52, 0, -42, 0, -1)
+    stairRun(course, 58, 72, -42, 0, 0, -12, 1)
 
     floorSign(course, 1, Vector3.new(-78, 26, 55), "ИЗ ЧАШИ")
     floorSign(course, 2, Vector3.new(68, 44, -38), "ВАННАЯ")
     floorSign(course, 3, Vector3.new(-58, 62, 20), "КРЫША")
-
     billboard(course, "⬆  СЮДА  •  НЕ ЗАБЛУДИСЬ  •  ⬆", GOLD, 520, 65, Vector3.new(0, 70, 0))
 
-    -- Floor 1: brushes, paper and soap. Hazards only block or push.
     addMop(obstacles, Vector3.new(45, 25, 35), 34, 0.75)
     addPaper(obstacles, Vector3.new(-40, 27, 45), 0)
     for i, x in ipairs({-26, 0, 26}) do
@@ -183,7 +177,6 @@ function UpperCourseBuilder:Apply(arena)
         hazard(soap, "PULSE", 1 + i * 0.15, 3)
     end
 
-    -- Floor 2: toilet-paper rollers and giant plungers, positioned directly on the ring floor.
     addPaper(obstacles, Vector3.new(45, 43, -26), 0.5)
     addPaper(obstacles, Vector3.new(-45, 43, -26), 1.0)
     for i, x in ipairs({-26, 26}) do
@@ -193,7 +186,6 @@ function UpperCourseBuilder:Apply(arena)
         hazard(handle, "BOUNCE", 1.1 + i * 0.2, 4)
     end
 
-    -- Floor 3: final bathroom gauntlet before the flush throne.
     addMop(obstacles, Vector3.new(0, 61, -42), 38, 0.95)
     local curtain = part(obstacles, "ShowerCurtainGate", Vector3.new(30, 12, 1.8), CFrame.new(35, 64, 23), Enum.Material.Fabric, BLUE, true)
     hazard(curtain, "SWEEP", 0.6, 15)
@@ -202,7 +194,6 @@ function UpperCourseBuilder:Apply(arena)
         hazard(soap, "PULSE", 1.3 + i * 0.1, 2.5)
     end
 
-    -- Huge arrows and labels make the intended direction visible from below.
     for _, data in ipairs({
         {Vector3.new(0, 17, 64), "⬆  ЭТАЖ 1"},
         {Vector3.new(0, 35, -50), "⬆  ЭТАЖ 2"},
@@ -213,11 +204,9 @@ function UpperCourseBuilder:Apply(arena)
         billboard(marker, data[2], WHITE, 330, 58, Vector3.new(0, 3, 0))
     end
 
-    -- Top = toilet-tank throne. The player presses E to flush the round immediately.
     local top = Instance.new("Folder")
     top.Name = "FlushThrone"
     top.Parent = course
-
     part(top, "FlushPedestal", Vector3.new(34, 8, 26), CFrame.new(0, 72, -12), Enum.Material.Marble, WHITE, true)
     part(top, "FlushTank", Vector3.new(28, 20, 10), CFrame.new(0, 82, -26), Enum.Material.SmoothPlastic, PORCELAIN, true)
     part(top, "FlushTankTop", Vector3.new(32, 3, 14), CFrame.new(0, 93, -26), Enum.Material.Marble, WHITE, true)
@@ -238,7 +227,6 @@ function UpperCourseBuilder:Apply(arena)
 
     billboard(top, "🚽  ТЫ ДОБРАЛСЯ ДО ВЕРХА!  🚽\nНАЖМИ E И СМЫВАЙ", GOLD, 520, 100, Vector3.new(0, 99, -15))
 
-    -- Small props reinforce the bathroom theme without blocking the route.
     for _, data in ipairs({
         {Vector3.new(74, 23, 20), GREEN},
         {Vector3.new(-74, 41, -12), PINK},
