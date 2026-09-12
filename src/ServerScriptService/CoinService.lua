@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local RoundStatsService = require(game.ServerScriptService:WaitForChild("RoundStatsService"))
 
@@ -9,6 +10,9 @@ local active = false
 local feedback = nil
 local combo = {}
 local comboAt = {}
+local proximityConnection = nil
+
+local PICKUP_RADIUS = 5.5
 
 local function resetCoin(coin)
     if not coin or not coin.Parent then
@@ -17,6 +21,7 @@ local function resetCoin(coin)
     coin:SetAttribute("Collected", false)
     coin.Transparency = 0
     coin.CanTouch = true
+    coin.CanQuery = true
 end
 
 local function resetCombo(player)
@@ -56,6 +61,7 @@ local function collect(coin, player, dataService)
 
     coin:SetAttribute("Collected", true)
     coin.CanTouch = false
+    coin.CanQuery = false
     coin.Transparency = 1
 
     local value = tonumber(coin:GetAttribute("Value")) or Config.Economy.CoinValue
@@ -117,6 +123,44 @@ local function hookCoin(coin, dataService)
     end)
 end
 
+local function startProximityPickup(folder, dataService)
+    if proximityConnection then
+        proximityConnection:Disconnect()
+    end
+
+    local accumulator = 0
+    proximityConnection = RunService.Heartbeat:Connect(function(dt)
+        if not active then
+            return
+        end
+        accumulator += dt
+        if accumulator < 0.10 then
+            return
+        end
+        accumulator = 0
+
+        for _, player in Players:GetPlayers() do
+            if player:GetAttribute("RoundActive") ~= true or player:GetAttribute("Eliminated") == true then
+                continue
+            end
+            local character = player.Character
+            local root = character and character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            if not root or not humanoid or humanoid.Health <= 0 then
+                continue
+            end
+
+            for _, coin in folder:GetChildren() do
+                if coin:IsA("BasePart") and not coin:GetAttribute("Collected") and coin.CanQuery then
+                    if (coin.Position - root.Position).Magnitude <= PICKUP_RADIUS then
+                        collect(coin, player, dataService)
+                    end
+                end
+            end
+        end
+    end)
+end
+
 function CoinService:BindFeedback(remote)
     feedback = remote
 end
@@ -135,10 +179,16 @@ function CoinService:Start(arena, dataService)
         resetCoin(coin)
         hookCoin(coin, dataService)
     end
+
+    startProximityPickup(folder, dataService)
 end
 
 function CoinService:Stop()
     active = false
+    if proximityConnection then
+        proximityConnection:Disconnect()
+        proximityConnection = nil
+    end
     for _, player in Players:GetPlayers() do
         resetCombo(player)
     end
