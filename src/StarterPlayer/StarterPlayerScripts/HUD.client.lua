@@ -96,6 +96,9 @@ stateRemote.OnClientEvent:Connect(function(event, value)
         if seconds <= Config.Round.LifebuoyWindow then
             status.Text = "⚠️ FLUSH IN " .. seconds .. "s — BUY A LIFEBOUY!"
             shop.Visible = player:GetAttribute("HasLifebuoy") ~= true
+            if seconds <= 10 then
+                TweenService:Create(timer, TweenInfo.new(0.2), {TextSize = 46}):Play()
+            end
         else
             status.Text = "COLLECT COINS • KEEP MOVING"
             shop.Visible = false
