@@ -177,6 +177,7 @@ function UpperCourseBuilder:Apply(arena)
     stairRun(course, 14, 22, 0, 70, 55, 1)
     stairRun(course, 22, 40, 0, -55, -35, -1)
     stairRun(course, 40, 58, 0, 35, 18, 1)
+    stairRun(course, 58, 72, 0, 18, -5, -1)
 
     floorSign(course, 1, Vector3.new(-78, 26, 55), "ИЗ ЧАШИ")
     floorSign(course, 2, Vector3.new(68, 44, -38), "ВАННАЯ")
@@ -253,7 +254,7 @@ function UpperCourseBuilder:Apply(arena)
         {Vector3.new(-74, 41, -12), PINK},
         {Vector3.new(54, 59, 34), ORANGE},
     }) do
-        local pot = cylinder(course, "DecorPlantPot", 7, 5, CFrame.new(data[1]), Enum.Material.SmoothPlastic, DARK, false)
+        cylinder(course, "DecorPlantPot", 7, 5, CFrame.new(data[1]), Enum.Material.SmoothPlastic, DARK, false)
         for j = 1, 5 do
             part(course, "DecorLeaf", Vector3.new(2, 8, 2), CFrame.new(data[1] + Vector3.new(math.cos(j) * 2, 6 + (j % 2), math.sin(j) * 2)), Enum.Material.Grass, data[2], false)
         end
