@@ -88,15 +88,7 @@ local function toiletPipe(parent, y0, y1, radius)
         if frontGap <= 0.38 or backGap <= 0.38 then
             continue
         end
-        local wall = part(
-            parent,
-            "PorcelainPipe",
-            Vector3.new(3.8, y1 - y0, 12),
-            CFrame.new(math.cos(a) * radius, (y0 + y1) / 2, math.sin(a) * radius) * CFrame.Angles(0, -a, 0),
-            Enum.Material.Marble,
-            PORCELAIN,
-            true
-        )
+        local wall = part(parent, "PorcelainPipe", Vector3.new(3.8, y1 - y0, 12), CFrame.new(math.cos(a) * radius, (y0 + y1) / 2, math.sin(a) * radius) * CFrame.Angles(0, -a, 0), Enum.Material.Marble, PORCELAIN, true)
         wall.CanTouch = false
     end
 end
@@ -110,15 +102,7 @@ local function ringFloor(parent, floor, y, radius, gapAngle)
         local delta = math.abs(math.atan2(math.sin(a - gapAngle), math.cos(a - gapAngle)))
         if delta > 0.28 then
             local x, z = math.cos(a) * radius, math.sin(a) * radius
-            local platform = part(
-                parent,
-                "Floor" .. floor .. "Platform",
-                Vector3.new(arc, 2.4, 16),
-                CFrame.new(x, y, z) * CFrame.Angles(0, -a + math.pi / 2, 0),
-                Enum.Material.Marble,
-                WHITE,
-                true
-            )
+            local platform = part(parent, "Floor" .. floor .. "Platform", Vector3.new(arc, 2.4, 16), CFrame.new(x, y, z) * CFrame.Angles(0, -a + math.pi / 2, 0), Enum.Material.Marble, WHITE, true)
             platform:SetAttribute("UpperRoute", true)
         end
     end
@@ -199,22 +183,22 @@ function UpperCourseBuilder:Apply(arena)
         hazard(soap, "PULSE", 1 + i * 0.15, 3)
     end
 
-    -- Floor 2: toilet-paper rollers and giant plungers.
-    addPaper(obstacles, Vector3.new(34, 43, -18), 0.5)
-    addPaper(obstacles, Vector3.new(-34, 43, -42), 1.0)
-    for i, x in ipairs({-25, 25}) do
-        local plunger = cylinder(obstacles, "Plunger", 12, 3, CFrame.new(x, 43, -8), Enum.Material.SmoothPlastic, PURPLE, true)
+    -- Floor 2: toilet-paper rollers and giant plungers, positioned directly on the ring floor.
+    addPaper(obstacles, Vector3.new(45, 43, -26), 0.5)
+    addPaper(obstacles, Vector3.new(-45, 43, -26), 1.0)
+    for i, x in ipairs({-26, 26}) do
+        local plunger = cylinder(obstacles, "Plunger", 12, 3, CFrame.new(x * 1.6, 43, -34), Enum.Material.SmoothPlastic, PURPLE, true)
         hazard(plunger, "BOUNCE", 1.1 + i * 0.2, 4)
-        local handle = part(obstacles, "PlungerHandle", Vector3.new(2.4, 12, 2.4), CFrame.new(x, 49, -8), Enum.Material.Metal, METAL, true)
+        local handle = part(obstacles, "PlungerHandle", Vector3.new(2.4, 12, 2.4), CFrame.new(x * 1.6, 49, -34), Enum.Material.Metal, METAL, true)
         hazard(handle, "BOUNCE", 1.1 + i * 0.2, 4)
     end
 
     -- Floor 3: final bathroom gauntlet before the flush throne.
-    addMop(obstacles, Vector3.new(0, 61, -30), 38, 0.95)
-    local curtain = part(obstacles, "ShowerCurtainGate", Vector3.new(30, 12, 1.8), CFrame.new(25, 64, 12), Enum.Material.Fabric, BLUE, true)
+    addMop(obstacles, Vector3.new(0, 61, -42), 38, 0.95)
+    local curtain = part(obstacles, "ShowerCurtainGate", Vector3.new(30, 12, 1.8), CFrame.new(35, 64, 23), Enum.Material.Fabric, BLUE, true)
     hazard(curtain, "SWEEP", 0.6, 15)
     for i, z in ipairs({-12, 4, 20}) do
-        local soap = part(obstacles, "SoapPad3", Vector3.new(8, 2.2, 8), CFrame.new(-20, 61, z), Enum.Material.SmoothPlastic, ORANGE, true)
+        local soap = part(obstacles, "SoapPad3", Vector3.new(8, 2.2, 8), CFrame.new(-38, 61, z), Enum.Material.SmoothPlastic, ORANGE, true)
         hazard(soap, "PULSE", 1.3 + i * 0.1, 2.5)
     end
 
