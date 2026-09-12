@@ -100,6 +100,71 @@ local dc = Instance.new("UICorner")
 dc.CornerRadius = UDim.new(0, 15)
 dc.Parent = daily
 
+local results = Instance.new("Frame")
+results.Name = "RoundResults"
+results.AnchorPoint = Vector2.new(0.5, 0.5)
+results.Position = UDim2.fromScale(0.5, 0.55)
+results.Size = UDim2.fromScale(0.48, 0.44)
+results.BackgroundColor3 = Color3.fromRGB(18, 22, 29)
+results.BackgroundTransparency = 0.04
+results.Visible = false
+results.ZIndex = 30
+results.Parent = gui
+local resultsCorner = Instance.new("UICorner")
+resultsCorner.CornerRadius = UDim.new(0, 20)
+resultsCorner.Parent = results
+local resultsStroke = Instance.new("UIStroke")
+resultsStroke.Thickness = 2
+resultsStroke.Transparency = 0.25
+resultsStroke.Parent = results
+
+local resultsTitle = Instance.new("TextLabel")
+resultsTitle.Size = UDim2.fromScale(0.9, 0.18)
+resultsTitle.Position = UDim2.fromScale(0.05, 0.06)
+resultsTitle.BackgroundTransparency = 1
+resultsTitle.Text = "ROUND COMPLETE"
+resultsTitle.TextColor3 = Color3.new(1, 1, 1)
+resultsTitle.Font = Enum.Font.GothamBlack
+resultsTitle.TextScaled = true
+resultsTitle.ZIndex = 31
+resultsTitle.Parent = results
+
+local resultsSubtitle = Instance.new("TextLabel")
+resultsSubtitle.Size = UDim2.fromScale(0.9, 0.12)
+resultsSubtitle.Position = UDim2.fromScale(0.05, 0.22)
+resultsSubtitle.BackgroundTransparency = 1
+resultsSubtitle.Text = ""
+resultsSubtitle.TextColor3 = Color3.fromRGB(190, 205, 215)
+resultsSubtitle.Font = Enum.Font.GothamBold
+resultsSubtitle.TextScaled = true
+resultsSubtitle.ZIndex = 31
+resultsSubtitle.Parent = results
+
+local resultsStats = Instance.new("TextLabel")
+resultsStats.Size = UDim2.fromScale(0.82, 0.42)
+resultsStats.Position = UDim2.fromScale(0.09, 0.37)
+resultsStats.BackgroundTransparency = 1
+resultsStats.Text = ""
+resultsStats.TextColor3 = Color3.new(1, 1, 1)
+resultsStats.Font = Enum.Font.GothamBold
+resultsStats.TextSize = 18
+resultsStats.TextWrapped = true
+resultsStats.TextXAlignment = Enum.TextXAlignment.Left
+resultsStats.TextYAlignment = Enum.TextYAlignment.Center
+resultsStats.ZIndex = 31
+resultsStats.Parent = results
+
+local resultsHint = Instance.new("TextLabel")
+resultsHint.Size = UDim2.fromScale(0.9, 0.10)
+resultsHint.Position = UDim2.fromScale(0.05, 0.85)
+resultsHint.BackgroundTransparency = 1
+resultsHint.Text = "NEXT ROUND STARTING SOON"
+resultsHint.TextColor3 = Color3.fromRGB(150, 170, 180)
+resultsHint.Font = Enum.Font.GothamBold
+resultsHint.TextScaled = true
+resultsHint.ZIndex = 31
+resultsHint.Parent = results
+
 local function pulse(button)
     local original = button.Size
     local bigger = UDim2.new(original.X.Scale, original.X.Offset + 8, original.Y.Scale, original.Y.Offset + 4)
@@ -161,12 +226,51 @@ local function formatSeconds(seconds)
     return string.format("%d:%02d", math.floor(seconds / 60), seconds % 60)
 end
 
+local function showResults(stats, survived)
+    stats = typeof(stats) == "table" and stats or {}
+    local coinsCollected = tonumber(stats.CoinsCollected) or 0
+    local rareCoins = tonumber(stats.RareCoinsCollected) or 0
+    local hazards = tonumber(stats.HazardsHit) or 0
+    local damage = tonumber(stats.DamageTaken) or 0
+
+    resultsTitle.Text = survived and "🏆 YOU SURVIVED!" or "💦 YOU GOT FLUSHED!"
+    resultsSubtitle.Text = survived and "+" .. tostring(Config.Economy.SurvivalReward) .. " COINS • WIN" or "+" .. tostring(Config.Economy.ParticipationReward) .. " COINS • BETTER LUCK NEXT ROUND"
+    resultsStats.Text = table.concat({
+        "🪙  Coins collected     " .. tostring(coinsCollected),
+        "⭐  Rare coins            " .. tostring(rareCoins),
+        "💥  Hazard hits          " .. tostring(hazards),
+        "❤️  Damage taken       " .. tostring(damage),
+    }, "\n")
+
+    results.Visible = true
+    results.Position = UDim2.fromScale(0.5, 0.62)
+    results.BackgroundTransparency = 1
+    TweenService:Create(results, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.fromScale(0.5, 0.55),
+        BackgroundTransparency = 0.04,
+    }):Play()
+end
+
+local function hideResults()
+    if not results.Visible then return end
+    local tween = TweenService:Create(results, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+        Position = UDim2.fromScale(0.5, 0.62),
+        BackgroundTransparency = 1,
+    })
+    tween:Play()
+    tween.Completed:Connect(function()
+        results.Visible = false
+    end)
+end
+
 stateRemote.OnClientEvent:Connect(function(event, value, roundNumber)
     if event == "INTERMISSION" then
+        hideResults()
         timer.Text = "NEXT ROUND " .. tostring(value)
         status.Text = "GET READY • COLLECT YOUR DAILY REWARD"
         shop.Visible = false
     elseif event == "ROUND_START" then
+        hideResults()
         roundLabel.Text = "ROUND " .. tostring(roundNumber or 0)
         timer.Text = formatSeconds(value)
         status.Text = "RUN! COLLECT COINS!"
@@ -196,7 +300,10 @@ stateRemote.OnClientEvent:Connect(function(event, value, roundNumber)
         status.Text = "FLUSHING... " .. tostring(value) .. "s"
     elseif event == "ROUND_RESULTS" then
         local survived = player:GetAttribute("LastRoundSurvived") == true
-        status.Text = survived and "YOU SURVIVED! +40 COINS" or "YOU GOT FLUSHED! +10 COINS"
+        status.Text = survived and "+" .. tostring(Config.Economy.SurvivalReward) .. " COINS • YOU SURVIVED!" or "+" .. tostring(Config.Economy.ParticipationReward) .. " COINS • YOU GOT FLUSHED!"
+        daily.Visible = true
+    elseif event == "ROUND_STATS" then
+        showResults(value, roundNumber == true)
         daily.Visible = true
     end
 end)
