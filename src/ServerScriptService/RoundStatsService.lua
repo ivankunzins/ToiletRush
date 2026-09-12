@@ -1,3 +1,6 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Config = require(ReplicatedStorage:WaitForChild("Config"))
+
 local RoundStatsService = {}
 local stats = {}
 
@@ -29,6 +32,7 @@ function RoundStatsService:Reset(players)
             player:SetAttribute(key, value)
         end
         player:SetAttribute("CoinCombo", 0)
+        player:SetAttribute("LifebuoyUnlocked", false)
     end
 end
 
@@ -39,14 +43,23 @@ end
 function RoundStatsService:AddCoin(player, value, combo, bonusCoins)
     local s = stats[player]
     if not s then return end
+
+    value = math.max(1, math.floor(value or 0))
     s.CoinsCollected += value
-    if value >= 5 then s.RareCoinsCollected += 1 end
+    if value >= Config.Economy.RareCoinValue then
+        s.RareCoinsCollected += 1
+    end
     s.MaxCombo = math.max(s.MaxCombo, combo or 0)
     s.ComboBonusCoins += math.max(0, bonusCoins or 0)
+
     player:SetAttribute("CoinsCollected", s.CoinsCollected)
     player:SetAttribute("RareCoinsCollected", s.RareCoinsCollected)
     player:SetAttribute("MaxCombo", s.MaxCombo)
     player:SetAttribute("ComboBonusCoins", s.ComboBonusCoins)
+
+    if s.CoinsCollected >= Config.Economy.LifebuoyUnlockCollected then
+        player:SetAttribute("LifebuoyUnlocked", true)
+    end
 end
 
 function RoundStatsService:AddHazardHit(player, damage)
