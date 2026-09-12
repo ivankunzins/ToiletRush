@@ -12,7 +12,7 @@ local DataService = require(ServerScriptService:WaitForChild("DataService"))
 local CoinService = require(ServerScriptService:WaitForChild("CoinService"))
 local ShopService = require(ServerScriptService:WaitForChild("ShopService"))
 local FlushService = require(ServerScriptService:WaitForChild("FlushService"))
-local RoundService = require(ServerScriptService:WaitForChild("RoundService"))
+local RoundService = require(ServerScriptService:WaitForChild("RoundServiceFixed"))
 local AchievementService = require(ServerScriptService:WaitForChild("AchievementService"))
 
 local remotes = ReplicatedStorage:FindFirstChild("Remotes") or Instance.new("Folder")
@@ -137,8 +137,6 @@ AchievementService:Bind(DataService, feedbackRemote)
 ShopService:Bind(buyRemote, DataService, RoundService, feedbackRemote)
 CoinService:BindFeedback(feedbackRemote)
 
--- The top throne owns the round-ending button. Reaching it marks the player as safe,
--- then the server starts the flush immediately; everyone below is pulled into the drain.
 if flushPrompt then
     flushPrompt.Triggered:Connect(function(player)
         if RoundService.State ~= "ROUND" then return end
