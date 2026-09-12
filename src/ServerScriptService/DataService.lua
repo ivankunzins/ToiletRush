@@ -2,11 +2,12 @@ local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 
 local Config = require(game.ReplicatedStorage:WaitForChild("Config"))
-local Store = DataStoreService:GetDataStore("ToiletRush_PlayerData_v2")
+local Store = DataStoreService:GetDataStore("ToiletRush_PlayerData_v3")
 
 local DataService = {}
 local profiles = {}
 local saving = {}
+local loadFailed = {}
 
 local DEFAULT = { Coins = Config.Economy.StartingCoins, Wins = 0, Rounds = 0 }
 
@@ -61,11 +62,18 @@ local function load(player)
     local ok, saved = pcall(function()
         return Store:GetAsync("p_" .. player.UserId)
     end)
-    if ok and type(saved) == "table" then
+
+    if not ok then
+        loadFailed[player] = true
+        warn("[ToiletRush] Data load failed for " .. player.Name .. ". Player will not be saved this session.")
+    elseif type(saved) == "table" then
         for key in pairs(data) do
-            if type(saved[key]) == "number" then data[key] = math.max(0, math.floor(saved[key])) end
+            if type(saved[key]) == "number" then
+                data[key] = math.max(0, math.floor(saved[key]))
+            end
         end
     end
+
     profiles[player] = data
 
     local stats = Instance.new("Folder")
@@ -81,24 +89,40 @@ local function load(player)
 end
 
 local function save(player)
-    if saving[player] then return end
+    if saving[player] or loadFailed[player] then return end
     local data = profiles[player]
     if not data then return end
     saving[player] = true
     local payload = { Coins = data.Coins, Wins = data.Wins, Rounds = data.Rounds }
-    pcall(function()
+    local ok, err = pcall(function()
         Store:UpdateAsync("p_" .. player.UserId, function()
             return payload
         end)
     end)
+    if not ok then
+        warn("[ToiletRush] Data save failed for " .. player.Name .. ": " .. tostring(err))
+    end
     saving[player] = nil
     profiles[player] = nil
+    loadFailed[player] = nil
 end
 
 Players.PlayerAdded:Connect(load)
 Players.PlayerRemoving:Connect(save)
+
+task.spawn(function()
+    while true do
+        task.wait(60)
+        for _, player in Players:GetPlayers() do
+            task.spawn(save, player)
+        end
+    end
+end)
+
 game:BindToClose(function()
-    for _, player in Players:GetPlayers() do save(player) end
+    for _, player in Players:GetPlayers() do
+        save(player)
+    end
 end)
 
 return DataService
