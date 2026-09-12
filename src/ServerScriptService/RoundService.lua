@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
+local RoundStatsService = require(game.ServerScriptService:WaitForChild("RoundStatsService"))
 
 local RoundService = {}
 RoundService.State = "INTERMISSION"
@@ -35,7 +36,7 @@ local function teleportPlayer(player, index, arena)
     end
 end
 
-function RoundService:Run(arena, stateRemote, coinService, shopService, flushService, dataService)
+function RoundService:Run(arena, stateRemote, coinService, shopService, flushService, dataService, achievementService)
     while true do
         self.State = "INTERMISSION"
         for remaining = Config.Round.Intermission, 1, -1 do
@@ -51,6 +52,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
 
         self.RoundNumber += 1
         shopService:Reset()
+        RoundStatsService:Reset(players)
         for i, player in ipairs(players) do
             player:SetAttribute("HasLifebuoy", false)
             player:SetAttribute("RoundActive", true)
@@ -76,6 +78,12 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
 
         for _, player in Players:GetPlayers() do
             player:SetAttribute("RoundActive", false)
+            local survived = player:GetAttribute("LastRoundSurvived") == true
+            dataService:MarkRound(player, survived)
+            if achievementService then
+                achievementService:EvaluateRound(player, RoundStatsService:Get(player), survived)
+            end
+            stateRemote:FireClient(player, "ROUND_STATS", RoundStatsService:Get(player), survived)
         end
         task.wait(Config.Round.ResultsDuration)
     end
