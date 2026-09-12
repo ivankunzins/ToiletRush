@@ -11,13 +11,10 @@ local feedback = nil
 local combo = {}
 local comboAt = {}
 local proximityConnection = nil
-
-local PICKUP_RADIUS = 5.5
+local animationConnection = nil
 
 local function resetCoin(coin)
-    if not coin or not coin.Parent then
-        return
-    end
+    if not coin or not coin.Parent then return end
     coin:SetAttribute("Collected", false)
     coin.Transparency = 0
     coin.CanTouch = true
@@ -27,17 +24,12 @@ end
 local function resetCombo(player)
     combo[player] = 0
     comboAt[player] = 0
-    if player.Parent then
-        player:SetAttribute("CoinCombo", 0)
-    end
+    if player.Parent then player:SetAttribute("CoinCombo", 0) end
 end
 
 local function addCombo(player)
     local now = os.clock()
-    local previous = comboAt[player] or 0
-    if now - previous > Config.Progression.ComboWindow then
-        combo[player] = 0
-    end
+    if now - (comboAt[player] or 0) > Config.Progression.ComboWindow then combo[player] = 0 end
     combo[player] = math.min((combo[player] or 0) + 1, Config.Progression.ComboMax)
     comboAt[player] = now
     player:SetAttribute("CoinCombo", combo[player])
@@ -45,28 +37,20 @@ local function addCombo(player)
 end
 
 local function collect(coin, player, dataService)
-    if not active or not coin.Parent or coin:GetAttribute("Collected") then
-        return
-    end
-    if player:GetAttribute("RoundActive") ~= true or player:GetAttribute("Eliminated") == true then
-        return
-    end
+    if not active or not coin.Parent or coin:GetAttribute("Collected") then return end
+    if player:GetAttribute("RoundActive") ~= true or player:GetAttribute("Eliminated") == true then return end
 
     local character = player.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-    if not root or not humanoid or humanoid.Health <= 0 then
-        return
-    end
+    if not root or not humanoid or humanoid.Health <= 0 then return end
 
     coin:SetAttribute("Collected", true)
     coin.CanTouch = false
     coin.CanQuery = false
     coin.Transparency = 1
 
-    local value = tonumber(coin:GetAttribute("Value")) or Config.Economy.CoinValue
-    value = math.max(1, math.floor(value))
-
+    local value = math.max(1, math.floor(tonumber(coin:GetAttribute("Value")) or Config.Economy.CoinValue))
     local currentCombo = addCombo(player)
     local bonusRate = math.min(
         (currentCombo - 1) * Config.Progression.ComboCoinBonusPerStack,
@@ -84,75 +68,58 @@ local function collect(coin, player, dataService)
     RoundStatsService:AddCoin(player, value, currentCombo, bonusCoins)
 
     local xp = Config.Progression.CoinXP
-    if value >= Config.Economy.RareCoinValue then
-        xp += Config.Progression.RareCoinBonusXP
-    end
+    if value >= Config.Economy.RareCoinValue then xp += Config.Progression.RareCoinBonusXP end
     xp += math.max(0, currentCombo - 1) * Config.Progression.ComboXPPerStack
-
     local xpOk, levelUp, level = dataService:AddXP(player, xp)
 
     if feedback then
+        local rare = value >= Config.Economy.RareCoinValue
         local comboText = currentCombo > 1 and " • COMBO x" .. tostring(currentCombo) or ""
         local bonusText = bonusCoins > 0 and " • BONUS +" .. tostring(bonusCoins) or ""
-        feedback:FireClient(player, "COIN", "+" .. tostring(totalCoins) .. " COINS • +" .. tostring(xp) .. " XP" .. comboText .. bonusText)
+        feedback:FireClient(player, rare and "RARE_COIN" or "COIN", "+" .. tostring(totalCoins) .. " COINS" .. comboText .. bonusText)
+        if player:GetAttribute("LifebuoyUnlocked") == true and player:GetAttribute("CoinGoalNotified") ~= true then
+            player:SetAttribute("CoinGoalNotified", true)
+            feedback:FireClient(player, "GOAL", "🛟 30 ОЧКОВ СОБРАНО! КУПИ СПАСАТЕЛЬНЫЙ КРУГ!")
+        end
         if xpOk and levelUp then
             feedback:FireClient(player, "LEVEL_UP", "LEVEL UP! • LEVEL " .. tostring(level))
         end
     end
 
     task.delay(Config.World.CoinRespawnSeconds, function()
-        if active then
-            resetCoin(coin)
-        end
+        if active and coin.Parent then resetCoin(coin) end
     end)
 end
 
 local function hookCoin(coin, dataService)
-    if not coin:IsA("BasePart") then
-        return
-    end
-    if connections[coin] then
-        connections[coin]:Disconnect()
-    end
+    if not coin:IsA("BasePart") then return end
+    if connections[coin] then connections[coin]:Disconnect() end
     connections[coin] = coin.Touched:Connect(function(hit)
         local character = hit:FindFirstAncestorOfClass("Model")
         local player = character and Players:GetPlayerFromCharacter(character)
-        if player then
-            collect(coin, player, dataService)
-        end
+        if player then collect(coin, player, dataService) end
     end)
 end
 
 local function startProximityPickup(folder, dataService)
-    if proximityConnection then
-        proximityConnection:Disconnect()
-    end
-
+    if proximityConnection then proximityConnection:Disconnect() end
     local accumulator = 0
     proximityConnection = RunService.Heartbeat:Connect(function(dt)
-        if not active then
-            return
-        end
+        if not active then return end
         accumulator += dt
-        if accumulator < 0.10 then
-            return
-        end
+        if accumulator < 0.08 then return end
         accumulator = 0
 
         for _, player in Players:GetPlayers() do
-            if player:GetAttribute("RoundActive") ~= true or player:GetAttribute("Eliminated") == true then
-                continue
-            end
+            if player:GetAttribute("RoundActive") ~= true or player:GetAttribute("Eliminated") == true then continue end
             local character = player.Character
             local root = character and character:FindFirstChild("HumanoidRootPart")
             local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-            if not root or not humanoid or humanoid.Health <= 0 then
-                continue
-            end
+            if not root or not humanoid or humanoid.Health <= 0 then continue end
 
             for _, coin in folder:GetChildren() do
                 if coin:IsA("BasePart") and not coin:GetAttribute("Collected") and coin.CanQuery then
-                    if (coin.Position - root.Position).Magnitude <= PICKUP_RADIUS then
+                    if (coin.Position - root.Position).Magnitude <= Config.World.CoinPickupRadius then
                         collect(coin, player, dataService)
                     end
                 end
@@ -173,6 +140,10 @@ function CoinService:Start(arena, dataService)
 
     for _, player in Players:GetPlayers() do
         resetCombo(player)
+        player:SetAttribute("CoinsCollected", 0)
+        player:SetAttribute("RareCoinsCollected", 0)
+        player:SetAttribute("LifebuoyUnlocked", false)
+        player:SetAttribute("CoinGoalNotified", false)
     end
 
     for _, coin in folder:GetChildren() do
@@ -181,17 +152,22 @@ function CoinService:Start(arena, dataService)
     end
 
     startProximityPickup(folder, dataService)
+    if animationConnection then animationConnection:Disconnect() end
+    animationConnection = RunService.Heartbeat:Connect(function(dt)
+        if not active then return end
+        for _, coin in folder:GetChildren() do
+            if coin:IsA("BasePart") and not coin:GetAttribute("Collected") then
+                coin.CFrame *= CFrame.Angles(0, dt * 2.7, 0)
+            end
+        end
+    end)
 end
 
 function CoinService:Stop()
     active = false
-    if proximityConnection then
-        proximityConnection:Disconnect()
-        proximityConnection = nil
-    end
-    for _, player in Players:GetPlayers() do
-        resetCombo(player)
-    end
+    if proximityConnection then proximityConnection:Disconnect(); proximityConnection = nil end
+    if animationConnection then animationConnection:Disconnect(); animationConnection = nil end
+    for _, player in Players:GetPlayers() do resetCombo(player) end
 end
 
 Players.PlayerRemoving:Connect(function(player)
