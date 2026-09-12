@@ -10,9 +10,10 @@ Config.Round = {
 
 Config.Economy = {
     StartingCoins = 30,
-    CoinValue = 1,
-    RareCoinValue = 5,
+    CoinValue = 5,
+    RareCoinValue = 10,
     LifebuoyCost = 25,
+    LifebuoyUnlockCollected = 30,
     SurvivalReward = 40,
     ParticipationReward = 10,
 }
