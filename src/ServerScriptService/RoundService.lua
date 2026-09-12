@@ -16,6 +16,16 @@ function RoundService:GetTimeLeft()
     return math.max(0, math.ceil(self.EndAt - os.clock()))
 end
 
+function RoundService:GetQueuedPlayers()
+    local queued = {}
+    for _, player in Players:GetPlayers() do
+        if player:GetAttribute("Queued") == true then
+            table.insert(queued, player)
+        end
+    end
+    return queued
+end
+
 function RoundService:SyncPlayer(player, stateRemote)
     if not player.Parent then
         return
@@ -70,8 +80,9 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         end
         self.PhaseEndAt = 0
 
-        local players = Players:GetPlayers()
+        local players = self:GetQueuedPlayers()
         if #players < Config.Round.MinimumPlayers then
+            stateRemote:FireAllClients("LOBBY_WAIT", #players, Config.Round.MinimumPlayers)
             task.wait(1)
             continue
         end
@@ -87,6 +98,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
             player:SetAttribute("FlushActive", false)
             player:SetAttribute("Eliminated", false)
             player:SetAttribute("LastRoundSurvived", false)
+            player:SetAttribute("LobbyStatus", "IN_ROUND")
 
             local humanoid = teleportPlayer(player, i, arena)
             if humanoid then
@@ -124,8 +136,6 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         flushService:Run(arena, shopService, dataService, stateRemote)
         self.PhaseEndAt = 0
 
-        -- FlushService determines the result and pays the round reward.
-        -- RoundService is the only place that records the round in persistent stats.
         for _, player in Players:GetPlayers() do
             if player:GetAttribute("RoundActive") ~= true then
                 continue
@@ -133,6 +143,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
 
             player:SetAttribute("RoundActive", false)
             player:SetAttribute("FlushActive", false)
+            player:SetAttribute("LobbyStatus", "QUEUED")
             local survived = player:GetAttribute("LastRoundSurvived") == true
             dataService:MarkRound(player, survived)
 
