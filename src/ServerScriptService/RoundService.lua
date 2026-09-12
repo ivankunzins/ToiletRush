@@ -84,6 +84,10 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         -- FlushService determines the result and pays the round reward.
         -- RoundService is the only place that records the round in persistent stats.
         for _, player in Players:GetPlayers() do
+            if player:GetAttribute("RoundActive") ~= true then
+                continue
+            end
+
             player:SetAttribute("RoundActive", false)
             local survived = player:GetAttribute("LastRoundSurvived") == true
             dataService:MarkRound(player, survived)
