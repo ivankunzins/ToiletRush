@@ -19,7 +19,10 @@ local function damagePlayer(part, hit)
     local player = character and Players:GetPlayerFromCharacter(character)
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     local root = character and character:FindFirstChild("HumanoidRootPart")
-    if not player or player:GetAttribute("RoundActive") ~= true or player:GetAttribute("FlushActive") == true then
+    if not player
+        or player:GetAttribute("RoundActive") ~= true
+        or player:GetAttribute("FlushActive") == true
+        or player:GetAttribute("Eliminated") == true then
         return
     end
     if not humanoid or humanoid.Health <= 0 or not root then
