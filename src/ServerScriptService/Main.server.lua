@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
 
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local WorldBuilder = require(ServerScriptService:WaitForChild("WorldBuilder"))
@@ -85,6 +86,7 @@ Players.PlayerAdded:Connect(function(player)
     player:SetAttribute("RoundActive", false)
     player:SetAttribute("FlushActive", false)
     player:SetAttribute("Eliminated", false)
+    player:SetAttribute("ReachedTop", false)
     player:SetAttribute("LastRoundSurvived", false)
     player:SetAttribute("Queued", false)
     player:SetAttribute("LobbyStatus", "LOBBY")
@@ -103,9 +105,20 @@ Players.PlayerRemoving:Connect(function(player)
     lobbyRequestAt[player] = nil
 end)
 
+-- Higher quality presentation: glossy bathroom, softer shadows and stronger reflections.
+pconversation = nil
+pcall(function()
+    Lighting.Technology = Enum.Technology.Future
+end)
+Lighting.GlobalShadows = true
+Lighting.ShadowSoftness = 0.22
+Lighting.EnvironmentDiffuseScale = 0.85
+Lighting.EnvironmentSpecularScale = 1
+Lighting.ExposureCompensation = 0.1
+
 local arena = WorldBuilder:Build()
 BathroomArchitecture:Apply(arena)
-UpperCourseBuilder:Apply(arena)
+local flushPrompt = UpperCourseBuilder:Apply(arena)
 VisualEffectsBuilder:Apply(arena)
 
 local coinsFolder = arena:FindFirstChild("Coins")
@@ -125,8 +138,29 @@ AchievementService:Bind(DataService, feedbackRemote)
 ShopService:Bind(buyRemote, DataService, RoundService, feedbackRemote)
 CoinService:BindFeedback(feedbackRemote)
 
-print(("[ToiletRush] Arena ready. Round=%ss, collect=%s points, lifebuoy=%s coins, upper course=ready, effects=ready"):format(
+-- The top throne owns the round-ending button. Reaching it marks the player as safe,
+-- then the server starts the flush immediately; everyone below is pulled into the drain.
+if flushPrompt then
+    flushPrompt.Triggered:Connect(function(player)
+        if RoundService.State ~= "ROUND" then return end
+        if player:GetAttribute("RoundActive") ~= true then return end
+        if player:GetAttribute("FlushActive") == true then return end
+        player:SetAttribute("ReachedTop", true)
+        if RoundService:RequestFlush(player) then
+            feedbackRemote:FireClient(player, "FLUSH_TRIGGERED", "🚽 СМЫВ! ВСЕ ВНИЗУ — В ДЫРКУ!")
+            flushPrompt.Enabled = false
+            task.delay(Config.Flush.Duration + 1, function()
+                if flushPrompt and flushPrompt.Parent then
+                    flushPrompt.Enabled = true
+                end
+            end)
+        end
+    end)
+end
+
+print(("[ToiletRush] Arena ready. Round=%ss, 3 floors, %s coins, goal=%s points, lifebuoy=%s coins, top flush=ready"):format(
     Config.Round.Duration,
+    Config.World.CoinCount + Config.World.RareCoinCount,
     Config.Economy.LifebuoyUnlockCollected,
     Config.Economy.LifebuoyCost
 ))
