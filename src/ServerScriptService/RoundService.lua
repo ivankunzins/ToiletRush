@@ -13,16 +13,25 @@ function RoundService:GetTimeLeft()
 end
 
 local function teleportPlayer(player, index, arena)
-    if not player.Character then
+    local character = player.Character
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if not character or not humanoid or humanoid.Health <= 0 then
         player:LoadCharacter()
+        character = player.Character or player.CharacterAdded:Wait()
     end
-    local character = player.Character or player.CharacterAdded:Wait()
+
     local root = character:WaitForChild("HumanoidRootPart", 8)
+    local newHumanoid = character:FindFirstChildOfClass("Humanoid")
     local spawns = arena:WaitForChild("Spawns"):GetChildren()
     if root and #spawns > 0 then
         local spawn = spawns[((index - 1) % #spawns) + 1]
         root.CFrame = spawn.CFrame + Vector3.new(0, 4, 0)
         root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+    end
+    if newHumanoid then
+        newHumanoid.Health = newHumanoid.MaxHealth
+        newHumanoid.AutoRotate = true
     end
 end
 
@@ -45,6 +54,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         for i, player in ipairs(players) do
             player:SetAttribute("HasLifebuoy", false)
             player:SetAttribute("RoundActive", true)
+            player:SetAttribute("LastRoundSurvived", false)
             teleportPlayer(player, i, arena)
         end
 
