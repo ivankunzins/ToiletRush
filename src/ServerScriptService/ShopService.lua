@@ -22,6 +22,10 @@ local function removeBuoy(player)
 end
 
 local function addBuoy(player)
+    if player:GetAttribute("Eliminated") == true then
+        return
+    end
+
     local character = player.Character
     if not character or character:FindFirstChild("LifebuoyVisual") then
         return
@@ -104,24 +108,19 @@ function ShopService:Bind(remote, dataService, roundService, feedbackRemote)
         end
     end)
 
-    Players.PlayerAdded:Connect(function(player)
+    local function bindCharacter(player)
         player.CharacterAdded:Connect(function()
             task.defer(function()
-                if self:HasLifebuoy(player) then
+                if self:HasLifebuoy(player) and player:GetAttribute("Eliminated") ~= true then
                     addBuoy(player)
                 end
             end)
         end)
-    end)
+    end
 
+    Players.PlayerAdded:Connect(bindCharacter)
     for _, player in Players:GetPlayers() do
-        player.CharacterAdded:Connect(function()
-            task.defer(function()
-                if self:HasLifebuoy(player) then
-                    addBuoy(player)
-                end
-            end)
-        end)
+        bindCharacter(player)
     end
 end
 
