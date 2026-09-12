@@ -5,6 +5,7 @@ local Players = game:GetService("Players")
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local WorldBuilder = require(ServerScriptService:WaitForChild("WorldBuilder"))
 local BathroomArchitecture = require(ServerScriptService:WaitForChild("BathroomArchitecture"))
+local UpperCourseBuilder = require(ServerScriptService:WaitForChild("UpperCourseBuilder"))
 local DataService = require(ServerScriptService:WaitForChild("DataService"))
 local CoinService = require(ServerScriptService:WaitForChild("CoinService"))
 local ShopService = require(ServerScriptService:WaitForChild("ShopService"))
@@ -37,35 +38,19 @@ local achievementRequestAt = {}
 local lobbyRequestAt = {}
 
 feedbackRemote.OnServerEvent:Connect(function(player, action)
-    if action ~= "CLAIM_DAILY" then
-        return
-    end
-
+    if action ~= "CLAIM_DAILY" then return end
     local now = os.clock()
-    if now - (dailyRequestAt[player] or 0) < 1 then
-        return
-    end
+    if now - (dailyRequestAt[player] or 0) < 1 then return end
     dailyRequestAt[player] = now
-
     local ok, reward = DataService:ClaimDaily(player)
-    if ok then
-        feedbackRemote:FireClient(player, "DAILY_SUCCESS", "DAILY +" .. reward .. " COINS")
-    else
-        feedbackRemote:FireClient(player, "DAILY_ERROR", "DAILY ALREADY CLAIMED")
-    end
+    feedbackRemote:FireClient(player, ok and "DAILY_SUCCESS" or "DAILY_ERROR", ok and "DAILY +" .. reward .. " COINS" or "DAILY ALREADY CLAIMED")
 end)
 
 achievementRemote.OnServerEvent:Connect(function(player, action)
-    if action ~= "GET" then
-        return
-    end
-
+    if action ~= "GET" then return end
     local now = os.clock()
-    if now - (achievementRequestAt[player] or 0) < 0.5 then
-        return
-    end
+    if now - (achievementRequestAt[player] or 0) < 0.5 then return end
     achievementRequestAt[player] = now
-
     if not DataService:Get(player) then
         task.delay(0.25, function()
             if player.Parent and DataService:Get(player) then
@@ -74,25 +59,19 @@ achievementRemote.OnServerEvent:Connect(function(player, action)
         end)
         return
     end
-
     achievementRemote:FireClient(player, "LIST", AchievementService:GetForPlayer(player))
 end)
 
 lobbyRemote.OnServerEvent:Connect(function(player, action)
-    if action ~= "PLAY" and action ~= "LEAVE" then
-        return
-    end
-
+    if action ~= "PLAY" and action ~= "LEAVE" then return end
     local now = os.clock()
-    if now - (lobbyRequestAt[player] or 0) < 0.5 then
-        return
-    end
+    if now - (lobbyRequestAt[player] or 0) < 0.5 then return end
     lobbyRequestAt[player] = now
-
-    if player:GetAttribute("RoundActive") == true then
+    if player:GetAttribute("RoundActive") == true then return end
+    if action == "PLAY" and not DataService:Get(player) then
+        feedbackRemote:FireClient(player, "LOBBY", "Профиль ещё загружается, подожди секунду")
         return
     end
-
     local queued = action == "PLAY"
     player:SetAttribute("Queued", queued)
     player:SetAttribute("LobbyStatus", queued and "QUEUED" or "LOBBY")
@@ -108,6 +87,8 @@ Players.PlayerAdded:Connect(function(player)
     player:SetAttribute("LastRoundSurvived", false)
     player:SetAttribute("Queued", false)
     player:SetAttribute("LobbyStatus", "LOBBY")
+    player:SetAttribute("CoinsCollected", 0)
+    player:SetAttribute("CoinGoalNotified", false)
 
     task.defer(function()
         RoundService:SyncPlayer(player, stateRemote)
@@ -123,13 +104,15 @@ end)
 
 local arena = WorldBuilder:Build()
 BathroomArchitecture:Apply(arena)
+UpperCourseBuilder:Apply(arena)
+arena:SetAttribute("BuildComplete", true)
+
 AchievementService:Bind(DataService, feedbackRemote)
 ShopService:Bind(buyRemote, DataService, RoundService, feedbackRemote)
 CoinService:BindFeedback(feedbackRemote)
 
-print(("[ToiletRush] Arena ready. Round=%ss, Lifebuoy window=%ss, collect=%s points, cost=%s coins"):format(
+print(("[ToiletRush] Arena ready. Round=%ss, collect=%s points, lifebuoy=%s coins, upper course=ready"):format(
     Config.Round.Duration,
-    Config.Round.LifebuoyWindow,
     Config.Economy.LifebuoyUnlockCollected,
     Config.Economy.LifebuoyCost
 ))
