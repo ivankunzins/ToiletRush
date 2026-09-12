@@ -8,6 +8,12 @@ local RoundStatsService = require(game.ServerScriptService:WaitForChild("RoundSt
 local arena = Workspace:WaitForChild("ToiletArena", 30)
 if not arena then return end
 
+local started = os.clock()
+while arena.Parent and arena:GetAttribute("BuildComplete") ~= true and os.clock() - started < 30 do
+    task.wait(0.1)
+end
+if not arena.Parent then return end
+
 local obstacles = arena:WaitForChild("Obstacles")
 local animated = {}
 local hitAt = {}
@@ -27,10 +33,7 @@ local function pushPlayer(part, hit)
 
     local away = root.Position - part.Position
     local horizontal = Vector3.new(away.X, 0, away.Z)
-    if horizontal.Magnitude < 0.1 then
-        horizontal = Vector3.new(math.cos(now * 3), 0, math.sin(now * 3))
-    end
-
+    if horizontal.Magnitude < 0.1 then horizontal = Vector3.new(math.cos(now * 3), 0, math.sin(now * 3)) end
     local push = horizontal.Unit * Config.Hazards.Knockback + Vector3.new(0, Config.Hazards.VerticalKnockback, 0)
     root.AssemblyLinearVelocity = Vector3.new(push.X, math.max(root.AssemblyLinearVelocity.Y, push.Y), push.Z)
     RoundStatsService:AddHazardHit(player, 0)
@@ -49,11 +52,8 @@ for _, object in obstacles:GetChildren() do
             motion = motion,
         }
     end
-
     if object:IsA("BasePart") and object.CanTouch and object:GetAttribute("Hazard") == true then
-        object.Touched:Connect(function(hit)
-            pushPlayer(object, hit)
-        end)
+        object.Touched:Connect(function(hit) pushPlayer(object, hit) end)
     end
 end
 
@@ -62,7 +62,7 @@ Players.PlayerRemoving:Connect(function(player)
     RoundStatsService:Remove(player)
 end)
 
-RunService.Heartbeat:Connect(function(tickTime)
+RunService.Heartbeat:Connect(function()
     local t = os.clock()
     for _, item in animated do
         local object = item.part
@@ -70,12 +70,10 @@ RunService.Heartbeat:Connect(function(tickTime)
             local wave = math.sin(t * item.speed + item.phase)
             if item.motion == "ROTATE" then
                 object.CFrame = item.origin * CFrame.Angles(0, t * item.speed, 0)
-            elseif item.motion == "BOUNCE" then
+            elseif item.motion == "BOUNCE" or item.motion == "PULSE" then
                 object.CFrame = item.origin + Vector3.new(0, wave * item.distance, 0)
             elseif item.motion == "SWEEP" then
                 object.CFrame = item.origin * CFrame.new(wave * item.distance, 0, 0)
-            elseif item.motion == "PULSE" then
-                object.CFrame = item.origin * CFrame.new(0, wave * item.distance, 0)
             end
         end
     end
