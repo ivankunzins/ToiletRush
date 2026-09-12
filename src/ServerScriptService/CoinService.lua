@@ -1,12 +1,12 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
+local RoundStatsService = require(game.ServerScriptService:WaitForChild("RoundStatsService"))
 
 local CoinService = {}
 local connections = {}
 local active = false
 local feedback = nil
-local roundStats = nil
 
 local function collect(coin, player, dataService)
     if not active or coin:GetAttribute("Collected") then return end
@@ -22,7 +22,7 @@ local function collect(coin, player, dataService)
     coin.Transparency = 1
     local value = coin:GetAttribute("Value") or Config.Economy.CoinValue
     dataService:AddCoins(player, value)
-    if roundStats then roundStats:AddCoin(player, value) end
+    RoundStatsService:AddCoin(player, value)
 
     if feedback then
         feedback:FireClient(player, "COIN", "+" .. tostring(value))
@@ -49,10 +49,6 @@ end
 
 function CoinService:BindFeedback(remote)
     feedback = remote
-end
-
-function CoinService:BindRoundStats(service)
-    roundStats = service
 end
 
 function CoinService:Start(arena, dataService)
