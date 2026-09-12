@@ -7,6 +7,7 @@ local remotes = ReplicatedStorage:WaitForChild("Remotes")
 local lobbyRemote = remotes:WaitForChild("LobbyAction")
 local stateRemote = remotes:WaitForChild("GameState")
 local feedbackRemote = remotes:WaitForChild("Feedback")
+local achievementRemote = remotes:WaitForChild("Achievements")
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
 
 local gui = Instance.new("ScreenGui")
@@ -65,7 +66,6 @@ status.TextXAlignment = Enum.TextXAlignment.Left
 
 local play = Instance.new("TextButton")
 play.Name = "PlayButton"
-play.AnchorPoint = Vector2.new(0, 0)
 play.Position = UDim2.fromScale(0.065, 0.70)
 play.Size = UDim2.fromScale(0.44, 0.13)
 play.BackgroundColor3 = Color3.fromRGB(45, 170, 105)
@@ -86,7 +86,7 @@ daily.Position = UDim2.fromScale(0.065, 0.85)
 daily.Size = UDim2.fromScale(0.21, 0.075)
 daily.BackgroundColor3 = Color3.fromRGB(35, 48, 58)
 daily.TextColor3 = Color3.fromRGB(255, 225, 80)
-daily.Text = "DAILY +?"
+daily.Text = "DAILY REWARD"
 daily.Font = Enum.Font.GothamBlack
 daily.TextScaled = true
 daily.AutoButtonColor = false
@@ -147,13 +147,51 @@ stats.TextYAlignment = Enum.TextYAlignment.Top
 local hint = label(profile, "180s ROUND  •  20s LIFEBUOY SHOP", UDim2.fromScale(0.86, 0.11), UDim2.fromScale(0.07, 0.83), Enum.Font.GothamBold, Color3.fromRGB(125, 150, 165))
 hint.TextXAlignment = Enum.TextXAlignment.Left
 
-local queueInfo = label(glow, "", UDim2.fromScale(0.50, 0.045), UDim2.fromScale(0.065, 0.64), Enum.Font.GothamBold, Color3.fromRGB(130, 160, 175))
+local queueInfo = label(glow, "Press PLAY to join the next round.", UDim2.fromScale(0.50, 0.045), UDim2.fromScale(0.065, 0.64), Enum.Font.GothamBold, Color3.fromRGB(130, 160, 175))
 queueInfo.TextXAlignment = Enum.TextXAlignment.Left
 
-local visible = true
+local achievementPanel = Instance.new("Frame")
+achievementPanel.Size = UDim2.fromScale(0.78, 0.68)
+achievementPanel.Position = UDim2.fromScale(0.11, 0.16)
+achievementPanel.BackgroundColor3 = Color3.fromRGB(15, 21, 28)
+achievementPanel.BackgroundTransparency = 0.02
+achievementPanel.Visible = false
+achievementPanel.ZIndex = 50
+achievementPanel.Parent = backdrop
+Instance.new("UICorner", achievementPanel).CornerRadius = UDim.new(0, 22)
+local achievementStroke = Instance.new("UIStroke")
+achievementStroke.Thickness = 2
+achievementStroke.Transparency = 0.3
+achievementStroke.Parent = achievementPanel
+
+local achievementTitle = label(achievementPanel, "🏆 ACHIEVEMENTS", UDim2.fromScale(0.78, 0.11), UDim2.fromScale(0.06, 0.05), Enum.Font.GothamBlack, Color3.fromRGB(240, 245, 250))
+achievementTitle.ZIndex = 51
+achievementTitle.TextXAlignment = Enum.TextXAlignment.Left
+local achievementClose = Instance.new("TextButton")
+achievementClose.Size = UDim2.fromScale(0.10, 0.10)
+achievementClose.Position = UDim2.fromScale(0.86, 0.04)
+achievementClose.BackgroundTransparency = 1
+achievementClose.Text = "×"
+achievementClose.TextColor3 = Color3.new(1, 1, 1)
+achievementClose.Font = Enum.Font.GothamBold
+achievementClose.TextScaled = true
+achievementClose.ZIndex = 51
+achievementClose.Parent = achievementPanel
+
+local achievementList = Instance.new("ScrollingFrame")
+achievementList.Size = UDim2.fromScale(0.90, 0.78)
+achievementList.Position = UDim2.fromScale(0.05, 0.17)
+achievementList.BackgroundTransparency = 1
+achievementList.BorderSizePixel = 0
+achievementList.ScrollBarThickness = 5
+achievementList.ZIndex = 51
+achievementList.Parent = achievementPanel
+local achievementLayout = Instance.new("UIListLayout")
+achievementLayout.Padding = UDim.new(0, 8)
+achievementLayout.Parent = achievementList
+
 local queued = false
 local roundActive = false
-local intermissionLeft = 0
 
 local function updateProfile()
     local ls = player:FindFirstChild("leaderstats")
@@ -177,12 +215,11 @@ local function updateProfile()
         "🔥  STREAK      " .. tostring(streak) .. "   •   BEST " .. tostring(best),
         "🎁  DAILY       " .. tostring(dailyStreak),
     }, "\n")
-    daily.Text = "DAILY REWARD"
 end
 
 local function setVisible(value)
-    visible = value
     backdrop.Visible = value
+    if not value then achievementPanel.Visible = false end
 end
 
 local function pulse(button)
@@ -194,6 +231,42 @@ local function pulse(button)
             TweenService:Create(button, TweenInfo.new(0.12), {Size = original}):Play()
         end
     end)
+end
+
+local function clearAchievements()
+    for _, child in achievementList:GetChildren() do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+end
+
+local function renderAchievements(data)
+    clearAchievements()
+    local items = {}
+    for id, item in pairs(typeof(data) == "table" and data or {}) do
+        item.Id = id
+        table.insert(items, item)
+    end
+    table.sort(items, function(a, b)
+        if a.Unlocked ~= b.Unlocked then return a.Unlocked end
+        return tostring(a.Name) < tostring(b.Name)
+    end)
+
+    for _, item in ipairs(items) do
+        local card = Instance.new("Frame")
+        card.Size = UDim2.new(1, -8, 0, 68)
+        card.BackgroundColor3 = item.Unlocked and Color3.fromRGB(38, 65, 48) or Color3.fromRGB(30, 35, 43)
+        card.ZIndex = 52
+        card.Parent = achievementList
+        Instance.new("UICorner", card).CornerRadius = UDim.new(0, 11)
+
+        local name = label(card, (item.Unlocked and "✓ " or "🔒 ") .. tostring(item.Name), UDim2.fromScale(0.92, 0.42), UDim2.fromScale(0.04, 0.06), Enum.Font.GothamBold, Color3.new(1, 1, 1))
+        name.ZIndex = 53
+        name.TextXAlignment = Enum.TextXAlignment.Left
+        local desc = label(card, tostring(item.Description) .. "  •  +" .. tostring(item.Reward), UDim2.fromScale(0.92, 0.34), UDim2.fromScale(0.04, 0.52), Enum.Font.Gotham, Color3.fromRGB(190, 195, 205))
+        desc.ZIndex = 53
+        desc.TextXAlignment = Enum.TextXAlignment.Left
+    end
+    achievementList.CanvasSize = UDim2.fromOffset(0, achievementLayout.AbsoluteContentSize.Y + 8)
 end
 
 play.Activated:Connect(function()
@@ -209,11 +282,12 @@ end)
 
 achievements.Activated:Connect(function()
     pulse(achievements)
-    local ui = player.PlayerGui:FindFirstChild("AchievementsUI")
-    local button = ui and ui:FindFirstChild("AchievementsButton")
-    if button and button:IsA("TextButton") then
-        button:Activate()
-    end
+    achievementPanel.Visible = true
+    achievementRemote:FireServer("GET")
+end)
+
+achievementClose.Activated:Connect(function()
+    achievementPanel.Visible = false
 end)
 
 lobbyRemote.OnClientEvent:Connect(function(action, isQueued)
@@ -236,12 +310,9 @@ end)
 
 stateRemote.OnClientEvent:Connect(function(kind, value)
     if kind == "INTERMISSION" then
-        intermissionLeft = tonumber(value) or 0
         if not queued and not roundActive then
             setVisible(true)
-            if intermissionLeft > 0 then
-                status.Text = "ROUND STARTS IN " .. intermissionLeft .. "s"
-            end
+            status.Text = "ROUND STARTS IN " .. tostring(tonumber(value) or 0) .. "s"
         end
     elseif kind == "LOBBY_WAIT" then
         if not queued and not roundActive then
@@ -249,27 +320,24 @@ stateRemote.OnClientEvent:Connect(function(kind, value)
             status.Text = "LOBBY — PRESS PLAY"
             queueInfo.Text = "Waiting for players to join."
         end
-    elseif kind == "ROUND_START" then
-        roundActive = true
-        setVisible(false)
-    elseif kind == "FLUSH_START" then
+    elseif kind == "ROUND_START" or kind == "FLUSH_START" then
         roundActive = true
         setVisible(false)
     elseif kind == "ROUND_STATS" then
         roundActive = false
         updateProfile()
-        if queued then
-            setVisible(false)
-        else
-            setVisible(true)
-        end
+        if not queued then setVisible(true) end
+    end
+end)
+
+achievementRemote.OnClientEvent:Connect(function(action, data)
+    if action == "LIST" and achievementPanel.Visible then
+        renderAchievements(data)
     end
 end)
 
 feedbackRemote.OnClientEvent:Connect(function(kind)
-    if kind == "DAILY_SUCCESS" then
-        updateProfile()
-    end
+    if kind == "DAILY_SUCCESS" then updateProfile() end
 end)
 
 for _, name in ipairs({"Level", "LevelXP", "LevelNextXP", "WinStreak", "DailyStreak"}) do
@@ -280,9 +348,7 @@ task.spawn(function()
     local ls = player:WaitForChild("leaderstats", 20)
     if ls then
         for _, child in ipairs(ls:GetChildren()) do
-            if child:IsA("ValueBase") then
-                child.Changed:Connect(updateProfile)
-            end
+            if child:IsA("ValueBase") then child.Changed:Connect(updateProfile) end
         end
         ls.ChildAdded:Connect(function(child)
             if child:IsA("ValueBase") then child.Changed:Connect(updateProfile) end
