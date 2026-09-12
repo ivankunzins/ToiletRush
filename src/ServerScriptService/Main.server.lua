@@ -78,7 +78,13 @@ end)
 Players.PlayerAdded:Connect(function(player)
     player:SetAttribute("HasLifebuoy", false)
     player:SetAttribute("RoundActive", false)
+    player:SetAttribute("FlushActive", false)
+    player:SetAttribute("Eliminated", false)
     player:SetAttribute("LastRoundSurvived", false)
+
+    task.defer(function()
+        RoundService:SyncPlayer(player, stateRemote)
+    end)
 end)
 
 Players.PlayerRemoving:Connect(function(player)
