@@ -17,6 +17,16 @@ Config.Economy = {
     ParticipationReward = 10,
 }
 
+Config.Progression = {
+    CoinXP = 2,
+    RareCoinBonusXP = 5,
+    HazardXP = 3,
+    SurvivalXP = 50,
+    ParticipationXP = 15,
+    LevelBaseXP = 100,
+    LevelGrowthXP = 50,
+}
+
 Config.World = {
     ArenaRadius = 105,
     ArenaY = 12,
