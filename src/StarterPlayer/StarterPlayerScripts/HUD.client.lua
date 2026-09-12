@@ -43,6 +43,55 @@ local wins = text("Wins", UDim2.fromScale(0.18, 0.045), UDim2.fromScale(0.025, 0
 local streak = text("Streak", UDim2.fromScale(0.22, 0.045), UDim2.fromScale(0.025, 0.125), "STREAK 0", Enum.Font.GothamBold)
 local buoy = text("Buoy", UDim2.fromScale(0.29, 0.05), UDim2.fromScale(0.69, 0.035), "LIFEBUOY: NO", Enum.Font.GothamBlack)
 
+local levelPanel = Instance.new("Frame")
+levelPanel.Name = "LevelPanel"
+levelPanel.AnchorPoint = Vector2.new(0, 0)
+levelPanel.Position = UDim2.fromScale(0.025, 0.175)
+levelPanel.Size = UDim2.fromScale(0.25, 0.07)
+levelPanel.BackgroundColor3 = Color3.fromRGB(20, 27, 34)
+levelPanel.BackgroundTransparency = 0.12
+levelPanel.Parent = gui
+local levelCorner = Instance.new("UICorner")
+levelCorner.CornerRadius = UDim.new(0, 12)
+levelCorner.Parent = levelPanel
+
+local levelText = Instance.new("TextLabel")
+levelText.Size = UDim2.fromScale(0.27, 0.48)
+levelText.Position = UDim2.fromScale(0.04, 0.12)
+levelText.BackgroundTransparency = 1
+levelText.Text = "LV 1"
+levelText.TextColor3 = Color3.fromRGB(255, 225, 80)
+levelText.Font = Enum.Font.GothamBlack
+levelText.TextScaled = true
+levelText.Parent = levelPanel
+
+local xpBack = Instance.new("Frame")
+xpBack.Size = UDim2.fromScale(0.62, 0.22)
+xpBack.Position = UDim2.fromScale(0.34, 0.22)
+xpBack.BackgroundColor3 = Color3.fromRGB(48, 54, 63)
+xpBack.Parent = levelPanel
+local xpBackCorner = Instance.new("UICorner")
+xpBackCorner.CornerRadius = UDim.new(1, 0)
+xpBackCorner.Parent = xpBack
+
+local xpFill = Instance.new("Frame")
+xpFill.Size = UDim2.fromScale(0, 1)
+xpFill.BackgroundColor3 = Color3.fromRGB(100, 205, 255)
+xpFill.Parent = xpBack
+local xpFillCorner = Instance.new("UICorner")
+xpFillCorner.CornerRadius = UDim.new(1, 0)
+xpFillCorner.Parent = xpFill
+
+local xpText = Instance.new("TextLabel")
+xpText.Size = UDim2.fromScale(0.62, 0.30)
+xpText.Position = UDim2.fromScale(0.34, 0.52)
+xpText.BackgroundTransparency = 1
+xpText.Text = "0 / 100 XP"
+xpText.TextColor3 = Color3.fromRGB(185, 200, 210)
+xpText.Font = Enum.Font.GothamBold
+xpText.TextScaled = true
+xpText.Parent = levelPanel
+
 local panel = Instance.new("Frame")
 panel.Name = "ProgressPanel"
 panel.AnchorPoint = Vector2.new(1, 0)
@@ -203,23 +252,31 @@ local function updateStats()
     streak.Text = "STREAK " .. tostring(player:GetAttribute("WinStreak") or 0)
 end
 
-local function updateBuoy()
-    local has = player:GetAttribute("HasLifebuoy") == true
-    buoy.Text = has and "LIFEBUOY: READY" or "LIFEBUOY: NO"
-    if has then
-        shop.Visible = false
-    end
+local function updateLevel()
+    local level = math.max(1, math.floor(tonumber(player:GetAttribute("Level")) or 1))
+    local current = math.max(0, math.floor(tonumber(player:GetAttribute("LevelXP")) or 0))
+    local needed = math.max(1, math.floor(tonumber(player:GetAttribute("LevelNextXP")) or Config.Progression.LevelBaseXP))
+    levelText.Text = "LV " .. tostring(level)
+    xpText.Text = tostring(current) .. " / " .. tostring(needed) .. " XP"
+    local ratio = math.clamp(current / needed, 0, 1)
+    TweenService:Create(xpFill, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.fromScale(ratio, 1),
+    }):Play()
 end
 
 task.spawn(function()
     while gui.Parent do
         updateStats()
+        updateLevel()
         updateBuoy()
         task.wait(0.2)
     end
 end)
 
 player:GetAttributeChangedSignal("HasLifebuoy"):Connect(updateBuoy)
+player:GetAttributeChangedSignal("Level"):Connect(updateLevel)
+player:GetAttributeChangedSignal("LevelXP"):Connect(updateLevel)
+player:GetAttributeChangedSignal("LevelNextXP"):Connect(updateLevel)
 
 local function formatSeconds(seconds)
     seconds = math.max(0, math.floor(tonumber(seconds) or 0))
@@ -300,7 +357,7 @@ stateRemote.OnClientEvent:Connect(function(event, value, roundNumber)
         status.Text = "FLUSHING... " .. tostring(value) .. "s"
     elseif event == "ROUND_RESULTS" then
         local survived = player:GetAttribute("LastRoundSurvived") == true
-        status.Text = survived and "+" .. tostring(Config.Economy.SurvivalReward) .. " COINS • YOU SURVIVED!" or "+" .. tostring(Config.Economy.ParticipationReward) .. " COINS • YOU GOT FLUSHED!"
+        status.Text = "+" .. tostring(survived and Config.Economy.SurvivalReward or Config.Economy.ParticipationReward) .. " COINS • " .. (survived and "YOU SURVIVED!" or "YOU GOT FLUSHED!")
         daily.Visible = true
     elseif event == "ROUND_STATS" then
         showResults(value, roundNumber == true)
@@ -339,19 +396,22 @@ local function fitMobile()
     if viewport.X < 700 then
         scale.Scale = 0.72
         panel.Visible = false
+        levelPanel.Visible = true
     elseif viewport.X < 1000 then
         scale.Scale = 0.88
         panel.Visible = true
+        levelPanel.Visible = true
     else
         scale.Scale = 1
         panel.Visible = true
+        levelPanel.Visible = true
     end
 
     if cameraConnection then
         cameraConnection:Disconnect()
     end
-    cameraConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(fitMobile)
+    cameraConnection = camera:GetPropertyChangedSignal("ViewportSize").Connect(fitMobile)
 end
 
 fitMobile()
-workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(fitMobile)
+workspace:GetPropertyChangedSignal("CurrentCamera").Connect(fitMobile)
