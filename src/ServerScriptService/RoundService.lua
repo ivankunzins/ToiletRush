@@ -60,6 +60,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         for i, player in ipairs(players) do
             player:SetAttribute("HasLifebuoy", false)
             player:SetAttribute("RoundActive", true)
+            player:SetAttribute("FlushActive", false)
             player:SetAttribute("LastRoundSurvived", false)
             teleportPlayer(player, i, arena)
         end
@@ -78,6 +79,12 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         self.State = "FLUSH"
         self.EndAt = 0
         coinService:Stop()
+        for _, player in Players:GetPlayers() do
+            if player:GetAttribute("RoundActive") == true then
+                player:SetAttribute("FlushActive", true)
+            end
+        end
+
         stateRemote:FireAllClients("FLUSH_WARNING")
         flushService:Run(arena, shopService, dataService, stateRemote)
 
@@ -89,6 +96,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
             end
 
             player:SetAttribute("RoundActive", false)
+            player:SetAttribute("FlushActive", false)
             local survived = player:GetAttribute("LastRoundSurvived") == true
             dataService:MarkRound(player, survived)
 
