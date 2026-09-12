@@ -9,19 +9,19 @@ Config.Round = {
 }
 
 Config.Economy = {
-    StartingCoins = 30,
+    StartingCoins = 0,
     CoinValue = 5,
     RareCoinValue = 10,
-    LifebuoyCost = 25,
     LifebuoyUnlockCollected = 30,
+    LifebuoyCost = 25,
     SurvivalReward = 40,
     ParticipationReward = 10,
 }
 
 Config.Progression = {
-    CoinXP = 2,
-    RareCoinBonusXP = 5,
-    HazardXP = 3,
+    CoinXP = 4,
+    RareCoinBonusXP = 8,
+    HazardXP = 1,
     SurvivalXP = 50,
     ParticipationXP = 15,
     LevelBaseXP = 100,
@@ -35,18 +35,19 @@ Config.Progression = {
 Config.World = {
     ArenaRadius = 105,
     ArenaY = 12,
-    CoinCount = 60,
-    RareCoinCount = 8,
-    CoinRespawnSeconds = 4,
-    ObstacleCount = 28,
+    CoinCount = 72,
+    RareCoinCount = 10,
+    CoinRespawnSeconds = 3,
+    CoinPickupRadius = 5.5,
+    ObstacleCount = 32,
     SpawnCount = 16,
 }
 
 Config.Hazards = {
-    Damage = 28,
-    Cooldown = 0.8,
-    Knockback = 42,
-    VerticalKnockback = 18,
+    Damage = 0,
+    Cooldown = 0.65,
+    Knockback = 58,
+    VerticalKnockback = 14,
 }
 
 Config.Flush = {
@@ -55,6 +56,15 @@ Config.Flush = {
     PullStrength = 125,
     SpinStrength = 52,
     SinkDepth = 34,
+}
+
+Config.Audio = {
+    CoinSoundId = "rbxassetid://6787582810",
+    RareCoinSoundId = "rbxassetid://6787582810",
+    MusicSoundId = "rbxassetid://9120386436",
+    CoinVolume = 0.65,
+    RareCoinVolume = 0.9,
+    MusicVolume = 0.16,
 }
 
 return Config
