@@ -49,11 +49,18 @@ end
 local function neonRing(parent, radius, y, segments)
     for i = 1, segments do
         local a = (i / segments) * math.pi * 2
-        local x, z = math.cos(a) * radius, math.sin(a) * radius
-        local p = part(parent, "NeonRim", Vector3.new(3, 0.35, 9), CFrame.new(x, y, z) * CFrame.Angles(0, -a, 0), Enum.Material.Neon)
+        local p = part(parent, "NeonRim", Vector3.new(3, 0.35, 9), CFrame.new(math.cos(a) * radius, y, math.sin(a) * radius) * CFrame.Angles(0, -a, 0), Enum.Material.Neon)
         p.Color = BLUE
         p.CanCollide = false
     end
+end
+
+local function hazardAttributes(p, motion, speed, distance)
+    p:SetAttribute("Motion", motion)
+    p:SetAttribute("Speed", speed)
+    p:SetAttribute("Distance", distance)
+    p:SetAttribute("Hazard", true)
+    return p
 end
 
 function WorldBuilder:Build()
@@ -83,10 +90,8 @@ function WorldBuilder:Build()
     local bowl = part(arena, "Bowl", Vector3.new(205, 12, 205), CFrame.new(0, 4, 0), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
     bowl.Color = WHITE
 
-    -- A second inset surface gives the bowl a readable lip instead of a flat cylinder.
     local inner = part(arena, "InnerBowl", Vector3.new(176, 3, 176), CFrame.new(0, 10, 0), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
     inner.Color = Color3.fromRGB(232, 239, 242)
-    inner.CanCollide = true
 
     local water = part(arena, "Water", Vector3.new(124, 1.5, 124), CFrame.new(0, 11.8, 0), Enum.Material.Glass, Enum.PartType.Cylinder)
     water.Color = BLUE
@@ -98,7 +103,6 @@ function WorldBuilder:Build()
     neonRing(arena, 61, 12.65, 24)
     neonRing(arena, 93, 12.8, 32)
 
-    -- Drain assembly.
     local drain = part(arena, "Drain", Vector3.new(26, 1.4, 26), CFrame.new(0, 12.7, 0), Enum.Material.Metal, Enum.PartType.Cylinder)
     drain.Color = Color3.fromRGB(45, 52, 58)
     drain.CanCollide = false
@@ -109,7 +113,6 @@ function WorldBuilder:Build()
         bar.CanCollide = false
     end
 
-    -- Oversized flush handle with a readable world prompt.
     local handleBase = part(arena, "FlushHandleBase", Vector3.new(8, 2, 8), CFrame.new(0, 18, -101), Enum.Material.Metal, Enum.PartType.Cylinder)
     handleBase.Color = DARK
     local handle = part(arena, "FlushHandle", Vector3.new(3, 9, 3), CFrame.new(0, 23, -101), Enum.Material.Metal, Enum.PartType.Cylinder)
@@ -129,8 +132,7 @@ function WorldBuilder:Build()
     spawns.Parent = arena
     for i = 1, Config.World.SpawnCount do
         local a = (i / Config.World.SpawnCount) * math.pi * 2
-        local r = 75
-        local s = part(spawns, "Spawn" .. i, Vector3.new(5, 0.5, 5), CFrame.new(math.cos(a) * r, 14, math.sin(a) * r), Enum.Material.Neon)
+        local s = part(spawns, "Spawn" .. i, Vector3.new(5, 0.5, 5), CFrame.new(math.cos(a) * 75, 14, math.sin(a) * 75), Enum.Material.Neon)
         s.Transparency = 1
         s.CanCollide = false
         s.CanTouch = false
@@ -140,7 +142,6 @@ function WorldBuilder:Build()
     obstacles.Name = "Obstacles"
     obstacles.Parent = arena
 
-    -- Deliberately separated obstacle lanes keep the arena traversable.
     for i = 1, Config.World.ObstacleCount do
         local a = ((i - 1) / Config.World.ObstacleCount) * math.pi * 2 + rng:NextNumber(-0.12, 0.12)
         local r = 32 + ((i * 17) % 52)
@@ -149,26 +150,22 @@ function WorldBuilder:Build()
         if kind == 0 then
             local b = part(obstacles, "Sweeper", Vector3.new(30, 3.5, 4), CFrame.new(x, 17, z) * CFrame.Angles(0, a, 0), Enum.Material.Metal)
             b.Color = Color3.fromRGB(255, 120, 45)
-            b:SetAttribute("Motion", "ROTATE")
-            b:SetAttribute("Speed", 0.9 + (i % 3) * 0.18)
+            hazardAttributes(b, "ROTATE", 0.9 + (i % 3) * 0.18, 0)
             local hub = part(obstacles, "SweeperHub", Vector3.new(6, 6, 6), CFrame.new(x, 17, z), Enum.Material.Metal, Enum.PartType.Ball)
             hub.Color = DARK
             hub.CanCollide = false
         elseif kind == 1 then
             local b = part(obstacles, "Soap", Vector3.new(12, 4, 12), CFrame.new(x, 14, z), Enum.Material.SmoothPlastic)
             b.Color = Color3.fromRGB(255, 145, 205)
-            b:SetAttribute("Motion", "BOUNCE")
-            b:SetAttribute("Speed", 1.2 + (i % 2) * 0.3)
-            b:SetAttribute("Distance", 2.5)
+            hazardAttributes(b, "BOUNCE", 1.2 + (i % 2) * 0.3, 2.5)
         elseif kind == 2 then
             local b = part(obstacles, "Pipe", Vector3.new(7, 7, 32), CFrame.new(x, 16, z) * CFrame.Angles(0, a, 0), Enum.Material.Metal)
             b.Color = Color3.fromRGB(255, 170, 55)
-            b:SetAttribute("Motion", "SWEEP")
-            b:SetAttribute("Speed", 0.8 + (i % 4) * 0.12)
-            b:SetAttribute("Distance", 9)
+            hazardAttributes(b, "SWEEP", 0.8 + (i % 4) * 0.12, 9)
         else
             local b = part(obstacles, "Brush", Vector3.new(7, 20, 7), CFrame.new(x, 22, z), Enum.Material.Wood, Enum.PartType.Cylinder)
             b.Color = Color3.fromRGB(125, 78, 42)
+            hazardAttributes(b, "ROTATE", 0.55 + (i % 3) * 0.08, 0)
             local bristles = part(obstacles, "Bristles", Vector3.new(13, 3, 13), CFrame.new(x, 31, z), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
             bristles.Color = Color3.fromRGB(45, 48, 52)
             bristles.CanCollide = false
@@ -185,7 +182,6 @@ function WorldBuilder:Build()
         local c = part(coins, "Coin" .. i, Vector3.new(2.8, 0.75, 2.8), CFrame.new(math.cos(a) * r, 17, math.sin(a) * r), Enum.Material.Neon, Enum.PartType.Cylinder)
         c.Color = GOLD
         c.CanCollide = false
-        c.CanTouch = true
         c:SetAttribute("Collected", false)
         c:SetAttribute("Value", Config.Economy.CoinValue)
     end
@@ -196,7 +192,6 @@ function WorldBuilder:Build()
         local c = part(coins, "RareCoin" .. i, Vector3.new(4, 1, 4), CFrame.new(math.cos(a) * r, 20, math.sin(a) * r), Enum.Material.Neon, Enum.PartType.Cylinder)
         c.Color = Color3.fromRGB(180, 90, 255)
         c.CanCollide = false
-        c.CanTouch = true
         c:SetAttribute("Collected", false)
         c:SetAttribute("Value", Config.Economy.RareCoinValue)
         billboard(c, "+5", Color3.fromRGB(220, 180, 255), 90, 30, Vector3.new(0, 2.5, 0))
