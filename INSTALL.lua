@@ -36,12 +36,18 @@ local function getSource(path)
     if not ok then
         error("Не удалось скачать " .. path .. "\n" .. tostring(result))
     end
+    if type(result) ~= "string" or #result == 0 then
+        error("Пустой исходник: " .. path)
+    end
     return result
 end
 
 local function replace(parent, name, className, source)
     local old = parent:FindFirstChild(name)
-    if old then old:Destroy() end
+    if old then
+        old:Destroy()
+    end
+
     local object = Instance.new(className)
     object.Name = name
     object.Source = source
@@ -49,21 +55,38 @@ local function replace(parent, name, className, source)
     return object
 end
 
-print("[ToiletRush] Установка началась...")
+print("[ToiletRush] Проверяю исходники...")
+
+-- Download everything before deleting anything in Studio. If GitHub/HTTP fails,
+-- the current working game is left untouched.
+local sources = {}
+for i, item in ipairs(files) do
+    sources[item.path] = getSource(item.path)
+    print(("[ToiletRush] downloaded %d/%d: %s"):format(i, #files, item.name))
+end
+
+print("[ToiletRush] Исходники проверены. Устанавливаю...")
+
 for _, item in ipairs(files) do
     local old = item.parent:FindFirstChild(item.name)
-    if old then old:Destroy() end
+    if old then
+        old:Destroy()
+    end
 end
 
 local oldRemotes = ReplicatedStorage:FindFirstChild("Remotes")
-if oldRemotes then oldRemotes:Destroy() end
+if oldRemotes then
+    oldRemotes:Destroy()
+end
+
 local oldArena = workspace:FindFirstChild("ToiletArena")
-if oldArena then oldArena:Destroy() end
+if oldArena then
+    oldArena:Destroy()
+end
 
 for i, item in ipairs(files) do
-    local source = getSource(item.path)
-    replace(item.parent, item.name, item.className, source)
-    print(("[ToiletRush] %d/%d: %s"):format(i, #files, item.name))
+    replace(item.parent, item.name, item.className, sources[item.path])
+    print(("[ToiletRush] installed %d/%d: %s"):format(i, #files, item.name))
 end
 
 print("[ToiletRush] ГОТОВО. Нажми Play.")
