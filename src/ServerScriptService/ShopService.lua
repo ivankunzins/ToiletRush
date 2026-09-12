@@ -78,6 +78,10 @@ function ShopService:Bind(remote, dataService, roundService, feedbackRemote)
             notify(player, "SHOP", "Магазин откроется в конце раунда")
             return
         end
+        if player:GetAttribute("RoundActive") ~= true or player:GetAttribute("Eliminated") == true then
+            notify(player, "SHOP", "❌ Ты уже выбыл из этого раунда")
+            return
+        end
 
         local timeLeft = roundService:GetTimeLeft()
         if timeLeft > Config.Round.LifebuoyWindow then
