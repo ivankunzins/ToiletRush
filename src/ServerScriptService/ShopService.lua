@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
 
 local ShopService = {}
@@ -12,11 +13,24 @@ local function notify(player, kind, text)
     end
 end
 
+local function removeBuoy(player)
+    local character = player.Character
+    local visual = character and character:FindFirstChild("LifebuoyVisual")
+    if visual then
+        visual:Destroy()
+    end
+end
+
 local function addBuoy(player)
     local character = player.Character
-    if not character or character:FindFirstChild("LifebuoyVisual") then return end
+    if not character or character:FindFirstChild("LifebuoyVisual") then
+        return
+    end
+
     local root = character:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+    if not root then
+        return
+    end
 
     local ring = Instance.new("Part")
     ring.Name = "LifebuoyVisual"
@@ -40,8 +54,9 @@ end
 function ShopService:Reset()
     purchased = {}
     requestAt = {}
-    for _, player in game:GetService("Players"):GetPlayers() do
+    for _, player in Players:GetPlayers() do
         player:SetAttribute("HasLifebuoy", false)
+        removeBuoy(player)
     end
 end
 
@@ -51,15 +66,19 @@ end
 
 function ShopService:Bind(remote, dataService, roundService, feedbackRemote)
     feedback = feedbackRemote
+
     remote.OnServerEvent:Connect(function(player)
         local now = os.clock()
-        if now - (requestAt[player] or 0) < 0.4 then return end
+        if now - (requestAt[player] or 0) < 0.4 then
+            return
+        end
         requestAt[player] = now
 
         if roundService.State ~= "ROUND" then
             notify(player, "SHOP", "Магазин откроется в конце раунда")
             return
         end
+
         local timeLeft = roundService:GetTimeLeft()
         if timeLeft > Config.Round.LifebuoyWindow then
             notify(player, "SHOP", "🛟 Спасательный круг доступен последние 20 секунд")
@@ -67,6 +86,7 @@ function ShopService:Bind(remote, dataService, roundService, feedbackRemote)
         end
         if self:HasLifebuoy(player) then
             notify(player, "SHOP", "🛟 Круг уже куплен")
+            addBuoy(player)
             return
         end
 
@@ -79,11 +99,36 @@ function ShopService:Bind(remote, dataService, roundService, feedbackRemote)
             notify(player, "SHOP_ERROR", "❌ Нужно 25 монет")
         end
     end)
+
+    Players.PlayerAdded:Connect(function(player)
+        player.CharacterAdded:Connect(function()
+            task.defer(function()
+                if self:HasLifebuoy(player) then
+                    addBuoy(player)
+                end
+            end)
+        end)
+    end)
+
+    for _, player in Players:GetPlayers() do
+        player.CharacterAdded:Connect(function()
+            task.defer(function()
+                if self:HasLifebuoy(player) then
+                    addBuoy(player)
+                end
+            end)
+        end)
+    end
 end
 
 function ShopService:Remove(player)
     purchased[player] = nil
     requestAt[player] = nil
+    removeBuoy(player)
 end
+
+Players.PlayerRemoving:Connect(function(player)
+    ShopService:Remove(player)
+end)
 
 return ShopService
