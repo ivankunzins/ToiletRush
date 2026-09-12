@@ -8,20 +8,40 @@ local connections = {}
 local active = false
 local feedback = nil
 
-local function collect(coin, player, dataService)
-    if not active or coin:GetAttribute("Collected") then return end
-    if player:GetAttribute("RoundActive") ~= true then return end
-    local character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+local function resetCoin(coin)
+    if not coin or not coin.Parent then return end
+    coin:SetAttribute("Collected", false)
+    coin.Transparency = 0
+    coin.CanTouch = true
+end
 
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid or humanoid.Health <= 0 then return end
+local function collect(coin, player, dataService)
+    if not active or not coin.Parent or coin:GetAttribute("Collected") then
+        return
+    end
+    if player:GetAttribute("RoundActive") ~= true then
+        return
+    end
+
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    if not root or not humanoid or humanoid.Health <= 0 then
+        return
+    end
 
     coin:SetAttribute("Collected", true)
     coin.CanTouch = false
     coin.Transparency = 1
-    local value = coin:GetAttribute("Value") or Config.Economy.CoinValue
-    dataService:AddCoins(player, value)
+
+    local value = tonumber(coin:GetAttribute("Value")) or Config.Economy.CoinValue
+    value = math.max(1, math.floor(value))
+
+    if not dataService:AddCoins(player, value) then
+        resetCoin(coin)
+        return
+    end
+
     RoundStatsService:AddCoin(player, value)
 
     if feedback then
@@ -29,21 +49,25 @@ local function collect(coin, player, dataService)
     end
 
     task.delay(Config.World.CoinRespawnSeconds, function()
-        if coin.Parent and active then
-            coin:SetAttribute("Collected", false)
-            coin.Transparency = 0
-            coin.CanTouch = true
+        if active then
+            resetCoin(coin)
         end
     end)
 end
 
 local function hookCoin(coin, dataService)
-    if not coin:IsA("BasePart") then return end
-    if connections[coin] then connections[coin]:Disconnect() end
+    if not coin:IsA("BasePart") then
+        return
+    end
+    if connections[coin] then
+        connections[coin]:Disconnect()
+    end
     connections[coin] = coin.Touched:Connect(function(hit)
         local character = hit:FindFirstAncestorOfClass("Model")
         local player = character and Players:GetPlayerFromCharacter(character)
-        if player then collect(coin, player, dataService) end
+        if player then
+            collect(coin, player, dataService)
+        end
     end)
 end
 
@@ -54,13 +78,23 @@ end
 function CoinService:Start(arena, dataService)
     active = true
     local folder = arena:WaitForChild("Coins")
+
+    -- A coin collected during the final seconds of the previous round must
+    -- never stay invisible in the next round.
     for _, coin in folder:GetChildren() do
+        resetCoin(coin)
         hookCoin(coin, dataService)
     end
 end
 
 function CoinService:Stop()
     active = false
+    -- Keep collection disabled immediately, but leave coin state to Start()
+    -- so the next round always begins with a complete field of coins.
 end
+
+Players.PlayerRemoving:Connect(function(player)
+    -- Coin connections are per coin; no player-specific state is retained.
+end)
 
 return CoinService
