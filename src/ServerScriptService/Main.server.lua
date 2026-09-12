@@ -106,7 +106,6 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 -- Higher quality presentation: glossy bathroom, softer shadows and stronger reflections.
-pconversation = nil
 pcall(function()
     Lighting.Technology = Enum.Technology.Future
 end)
