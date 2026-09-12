@@ -22,8 +22,10 @@ local files = {
     {path = "src/ServerScriptService/RoundService.lua", parent = ServerScriptService, name = "RoundService", className = "ModuleScript"},
     {path = "src/ServerScriptService/RoundStatsService.lua", parent = ServerScriptService, name = "RoundStatsService", className = "ModuleScript"},
     {path = "src/ServerScriptService/ShopService.lua", parent = ServerScriptService, name = "ShopService", className = "ModuleScript"},
+    {path = "src/ServerScriptService/UpperCourseBuilder.lua", parent = ServerScriptService, name = "UpperCourseBuilder", className = "ModuleScript"},
     {path = "src/ServerScriptService/WorldBuilder.lua", parent = ServerScriptService, name = "WorldBuilder", className = "ModuleScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Achievements.client.lua", parent = StarterPlayerScripts, name = "Achievements", className = "LocalScript"},
+    {path = "src/StarterPlayer/StarterPlayerScripts/Audio.client.lua", parent = StarterPlayerScripts, name = "Audio", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/CoinGoal.client.lua", parent = StarterPlayerScripts, name = "CoinGoal", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Effects.client.lua", parent = StarterPlayerScripts, name = "Effects", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/HUD.client.lua", parent = StarterPlayerScripts, name = "HUD", className = "LocalScript"},
@@ -34,24 +36,15 @@ local files = {
 
 local function getSource(path)
     local url = BASE .. path:gsub(" ", "%%20")
-    local ok, result = pcall(function()
-        return HttpService:GetAsync(url, true)
-    end)
-    if not ok then
-        error("Не удалось скачать " .. path .. "\n" .. tostring(result))
-    end
-    if type(result) ~= "string" or #result == 0 then
-        error("Пустой исходник: " .. path)
-    end
+    local ok, result = pcall(function() return HttpService:GetAsync(url, true) end)
+    if not ok then error("Не удалось скачать " .. path .. "\n" .. tostring(result)) end
+    if type(result) ~= "string" or #result == 0 then error("Пустой исходник: " .. path) end
     return result
 end
 
 local function replace(parent, name, className, source)
     local old = parent:FindFirstChild(name)
-    if old then
-        old:Destroy()
-    end
-
+    if old then old:Destroy() end
     local object = Instance.new(className)
     object.Name = name
     object.Source = source
@@ -60,7 +53,6 @@ local function replace(parent, name, className, source)
 end
 
 print("[ToiletRush] Проверяю исходники...")
-
 local sources = {}
 for i, item in ipairs(files) do
     sources[item.path] = getSource(item.path)
@@ -68,23 +60,15 @@ for i, item in ipairs(files) do
 end
 
 print("[ToiletRush] Исходники проверены. Устанавливаю...")
-
 for _, item in ipairs(files) do
     local old = item.parent:FindFirstChild(item.name)
-    if old then
-        old:Destroy()
-    end
+    if old then old:Destroy() end
 end
 
 local oldRemotes = ReplicatedStorage:FindFirstChild("Remotes")
-if oldRemotes then
-    oldRemotes:Destroy()
-end
-
+if oldRemotes then oldRemotes:Destroy() end
 local oldArena = workspace:FindFirstChild("ToiletArena")
-if oldArena then
-    oldArena:Destroy()
-end
+if oldArena then oldArena:Destroy() end
 
 for i, item in ipairs(files) do
     replace(item.parent, item.name, item.className, sources[item.path])
