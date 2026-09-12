@@ -3,7 +3,7 @@ local Lighting = game:GetService("Lighting")
 local Config = require(game.ReplicatedStorage:WaitForChild("Config"))
 
 local WorldBuilder = {}
-local rng = Random.new(20260912)
+local rng = Random.new()
 
 local WHITE = Color3.fromRGB(245, 248, 250)
 local DARK = Color3.fromRGB(28, 33, 40)
@@ -21,7 +21,6 @@ local function part(parent, name, size, cframe, material, shape)
     p.Material = material or Enum.Material.SmoothPlastic
     p.TopSurface = Enum.SurfaceType.Smooth
     p.BottomSurface = Enum.SurfaceType.Smooth
-    if shape then p.Shape = shape end
     p.Parent = parent
     return p
 end
@@ -52,6 +51,7 @@ local function neonRing(parent, radius, y, segments)
         local p = part(parent, "NeonRim", Vector3.new(3, 0.35, 9), CFrame.new(math.cos(a) * radius, y, math.sin(a) * radius) * CFrame.Angles(0, -a, 0), Enum.Material.Neon)
         p.Color = BLUE
         p.CanCollide = false
+        p.CanTouch = false
     end
 end
 
@@ -80,6 +80,19 @@ function WorldBuilder:Build()
     atmosphere.Haze = 0.8
     atmosphere.Parent = Lighting
 
+    local bloom = Lighting:FindFirstChild("ToiletBloom") or Instance.new("BloomEffect")
+    bloom.Name = "ToiletBloom"
+    bloom.Intensity = 0.45
+    bloom.Size = 22
+    bloom.Threshold = 1.1
+    bloom.Parent = Lighting
+
+    local color = Lighting:FindFirstChild("ToiletColor") or Instance.new("ColorCorrectionEffect")
+    color.Name = "ToiletColor"
+    color.Contrast = 0.08
+    color.Saturation = 0.12
+    color.Parent = Lighting
+
     local arena = Instance.new("Folder")
     arena.Name = "ToiletArena"
     arena.Parent = Workspace
@@ -106,11 +119,13 @@ function WorldBuilder:Build()
     local drain = part(arena, "Drain", Vector3.new(26, 1.4, 26), CFrame.new(0, 12.7, 0), Enum.Material.Metal, Enum.PartType.Cylinder)
     drain.Color = Color3.fromRGB(45, 52, 58)
     drain.CanCollide = false
+    drain.CanTouch = false
     for i = 1, 8 do
         local a = (i / 8) * math.pi * 2
         local bar = part(arena, "DrainBar", Vector3.new(22, 0.45, 1.1), CFrame.new(0, 13.45, 0) * CFrame.Angles(0, a, 0), Enum.Material.Metal)
         bar.Color = Color3.fromRGB(120, 130, 138)
         bar.CanCollide = false
+        bar.CanTouch = false
     end
 
     local handleBase = part(arena, "FlushHandleBase", Vector3.new(8, 2, 8), CFrame.new(0, 18, -101), Enum.Material.Metal, Enum.PartType.Cylinder)
@@ -154,6 +169,7 @@ function WorldBuilder:Build()
             local hub = part(obstacles, "SweeperHub", Vector3.new(6, 6, 6), CFrame.new(x, 17, z), Enum.Material.Metal, Enum.PartType.Ball)
             hub.Color = DARK
             hub.CanCollide = false
+            hub.CanTouch = false
         elseif kind == 1 then
             local b = part(obstacles, "Soap", Vector3.new(12, 4, 12), CFrame.new(x, 14, z), Enum.Material.SmoothPlastic)
             b.Color = Color3.fromRGB(255, 145, 205)
@@ -169,6 +185,7 @@ function WorldBuilder:Build()
             local bristles = part(obstacles, "Bristles", Vector3.new(13, 3, 13), CFrame.new(x, 31, z), Enum.Material.SmoothPlastic, Enum.PartType.Cylinder)
             bristles.Color = Color3.fromRGB(45, 48, 52)
             bristles.CanCollide = false
+            bristles.CanTouch = false
         end
     end
 
@@ -182,6 +199,7 @@ function WorldBuilder:Build()
         local c = part(coins, "Coin" .. i, Vector3.new(2.8, 0.75, 2.8), CFrame.new(math.cos(a) * r, 17, math.sin(a) * r), Enum.Material.Neon, Enum.PartType.Cylinder)
         c.Color = GOLD
         c.CanCollide = false
+        c.CanTouch = true
         c:SetAttribute("Collected", false)
         c:SetAttribute("Value", Config.Economy.CoinValue)
     end
@@ -192,6 +210,7 @@ function WorldBuilder:Build()
         local c = part(coins, "RareCoin" .. i, Vector3.new(4, 1, 4), CFrame.new(math.cos(a) * r, 20, math.sin(a) * r), Enum.Material.Neon, Enum.PartType.Cylinder)
         c.Color = Color3.fromRGB(180, 90, 255)
         c.CanCollide = false
+        c.CanTouch = true
         c:SetAttribute("Collected", false)
         c:SetAttribute("Value", Config.Economy.RareCoinValue)
         billboard(c, "+5", Color3.fromRGB(220, 180, 255), 90, 30, Vector3.new(0, 2.5, 0))
