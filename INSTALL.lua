@@ -26,6 +26,7 @@ local files = {
     {path = "src/StarterPlayer/StarterPlayerScripts/Effects.client.lua", parent = StarterPlayerScripts, name = "Effects", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/HUD.client.lua", parent = StarterPlayerScripts, name = "HUD", className = "LocalScript"},
     {path = "src/StarterPlayer/StarterPlayerScripts/Feedback.client.lua", parent = StarterPlayerScripts, name = "Feedback", className = "LocalScript"},
+    {path = "src/StarterPlayer/StarterPlayerScripts/Menu.client.lua", parent = StarterPlayerScripts, name = "Menu", className = "LocalScript"},
 }
 
 local function getSource(path)
@@ -57,8 +58,6 @@ end
 
 print("[ToiletRush] Проверяю исходники...")
 
--- Download everything before deleting anything in Studio. If GitHub/HTTP fails,
--- the current working game is left untouched.
 local sources = {}
 for i, item in ipairs(files) do
     sources[item.path] = getSource(item.path)
