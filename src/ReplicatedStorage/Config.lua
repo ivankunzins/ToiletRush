@@ -20,11 +20,18 @@ Config.Economy = {
 Config.World = {
     ArenaRadius = 105,
     ArenaY = 12,
-    CoinCount = 54,
-    RareCoinCount = 6,
+    CoinCount = 60,
+    RareCoinCount = 8,
     CoinRespawnSeconds = 4,
-    ObstacleCount = 24,
+    ObstacleCount = 28,
     SpawnCount = 16,
+}
+
+Config.Hazards = {
+    Damage = 28,
+    Cooldown = 0.8,
+    Knockback = 42,
+    VerticalKnockback = 18,
 }
 
 Config.Flush = {
