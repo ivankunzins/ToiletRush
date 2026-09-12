@@ -52,10 +52,17 @@ local bc = Instance.new("UICorner")
 bc.CornerRadius = UDim.new(0, 13)
 bc.Parent = button
 
-local roundActive = false
 local busy = false
 
+local function hideLegacyButton()
+    local playerGui = player:FindFirstChildOfClass("PlayerGui")
+    local hud = playerGui and playerGui:FindFirstChild("ToiletRushHUD")
+    local legacy = hud and hud:FindFirstChild("LifebuoyButton")
+    if legacy then legacy.Visible = false end
+end
+
 local function update()
+    hideLegacyButton()
     local collected = math.max(0, math.floor(tonumber(player:GetAttribute("CoinsCollected")) or 0))
     local unlocked = player:GetAttribute("LifebuoyUnlocked") == true
     local has = player:GetAttribute("HasLifebuoy") == true
