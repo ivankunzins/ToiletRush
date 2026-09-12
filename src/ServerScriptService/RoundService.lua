@@ -10,37 +10,28 @@ RoundService.PhaseEndAt = 0
 RoundService.RoundNumber = 0
 
 function RoundService:GetTimeLeft()
-    if self.State ~= "ROUND" then
-        return 0
-    end
+    if self.State ~= "ROUND" then return 0 end
     return math.max(0, math.ceil(self.EndAt - os.clock()))
 end
 
 function RoundService:GetQueuedPlayers()
     local queued = {}
     for _, player in Players:GetPlayers() do
-        if player:GetAttribute("Queued") == true then
-            table.insert(queued, player)
-        end
+        if player:GetAttribute("Queued") == true then table.insert(queued, player) end
     end
     return queued
 end
 
 function RoundService:SyncPlayer(player, stateRemote)
-    if not player.Parent then
-        return
-    end
-
+    if not player.Parent then return end
     if self.State == "INTERMISSION" then
-        local remaining = math.max(0, math.ceil(self.PhaseEndAt - os.clock()))
-        stateRemote:FireClient(player, "INTERMISSION", remaining)
+        stateRemote:FireClient(player, "INTERMISSION", math.max(0, math.ceil(self.PhaseEndAt - os.clock())))
     elseif self.State == "ROUND" then
         stateRemote:FireClient(player, "ROUND_START", Config.Round.Duration, self.RoundNumber)
         stateRemote:FireClient(player, "TICK", self:GetTimeLeft())
     elseif self.State == "FLUSH" then
-        local remaining = math.max(0, math.ceil(self.PhaseEndAt - os.clock()))
         stateRemote:FireClient(player, "FLUSH_START", Config.Flush.Duration)
-        stateRemote:FireClient(player, "FLUSH_TICK", remaining)
+        stateRemote:FireClient(player, "FLUSH_TICK", math.max(0, math.ceil(self.PhaseEndAt - os.clock())))
     end
 end
 
@@ -73,7 +64,6 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         self.State = "INTERMISSION"
         self.EndAt = 0
         self.PhaseEndAt = os.clock() + Config.Round.Intermission
-
         for remaining = Config.Round.Intermission, 1, -1 do
             stateRemote:FireAllClients("INTERMISSION", remaining)
             task.wait(1)
@@ -103,9 +93,15 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
             local humanoid = teleportPlayer(player, i, arena)
             if humanoid then
                 deathConnections[player] = humanoid.Died:Connect(function()
-                    if player:GetAttribute("RoundActive") == true then
-                        player:SetAttribute("Eliminated", true)
-                    end
+                    -- Obstacles are non-lethal. If a player falls out of the course,
+                    -- recover them in the same round instead of eliminating them.
+                    if player:GetAttribute("RoundActive") ~= true or player:GetAttribute("FlushActive") == true then return end
+                    task.delay(0.7, function()
+                        if player.Parent and player:GetAttribute("RoundActive") == true and player:GetAttribute("FlushActive") ~= true then
+                            local recovered = teleportPlayer(player, i, arena)
+                            if recovered then recovered.Health = recovered.MaxHealth end
+                        end
+                    end)
                 end)
             end
         end
@@ -117,8 +113,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         stateRemote:FireAllClients("ROUND_START", Config.Round.Duration, self.RoundNumber)
 
         while self:GetTimeLeft() > 0 do
-            local left = self:GetTimeLeft()
-            stateRemote:FireAllClients("TICK", left)
+            stateRemote:FireAllClients("TICK", self:GetTimeLeft())
             task.wait(1)
         end
 
@@ -127,9 +122,7 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         self.PhaseEndAt = os.clock() + Config.Flush.Duration
         coinService:Stop()
         for _, player in Players:GetPlayers() do
-            if player:GetAttribute("RoundActive") == true then
-                player:SetAttribute("FlushActive", true)
-            end
+            if player:GetAttribute("RoundActive") == true then player:SetAttribute("FlushActive", true) end
         end
 
         stateRemote:FireAllClients("FLUSH_WARNING")
@@ -137,27 +130,19 @@ function RoundService:Run(arena, stateRemote, coinService, shopService, flushSer
         self.PhaseEndAt = 0
 
         for _, player in Players:GetPlayers() do
-            if player:GetAttribute("RoundActive") ~= true then
-                continue
-            end
-
+            if player:GetAttribute("RoundActive") ~= true then continue end
             player:SetAttribute("RoundActive", false)
             player:SetAttribute("FlushActive", false)
             player:SetAttribute("LobbyStatus", "QUEUED")
             local survived = player:GetAttribute("LastRoundSurvived") == true
             dataService:MarkRound(player, survived)
-
             if achievementService then
                 achievementService:EvaluateRound(player, RoundStatsService:Get(player), survived)
             end
-
             stateRemote:FireClient(player, "ROUND_STATS", RoundStatsService:Get(player), survived)
         end
 
-        for _, connection in pairs(deathConnections) do
-            connection:Disconnect()
-        end
-
+        for _, connection in pairs(deathConnections) do connection:Disconnect() end
         task.wait(Config.Round.ResultsDuration)
     end
 end
