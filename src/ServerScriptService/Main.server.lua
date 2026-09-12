@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
+local Players = game:GetService("Players")
 
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local WorldBuilder = require(ServerScriptService:WaitForChild("WorldBuilder"))
@@ -26,6 +27,22 @@ end
 local stateRemote = remote("GameState")
 local buyRemote = remote("BuyLifebuoy")
 local feedbackRemote = remote("Feedback")
+
+feedbackRemote.OnServerEvent:Connect(function(player, action)
+    if action ~= "CLAIM_DAILY" then return end
+    local ok, reward = DataService:ClaimDaily(player)
+    if ok then
+        feedbackRemote:FireClient(player, "DAILY_SUCCESS", "DAILY +" .. reward .. " COINS")
+    else
+        feedbackRemote:FireClient(player, "DAILY_ERROR", "DAILY ALREADY CLAIMED")
+    end
+end)
+
+Players.PlayerAdded:Connect(function(player)
+    player:SetAttribute("HasLifebuoy", false)
+    player:SetAttribute("RoundActive", false)
+    player:SetAttribute("LastRoundSurvived", false)
+end)
 
 local arena = WorldBuilder:Build()
 ShopService:Bind(buyRemote, DataService, RoundService, feedbackRemote)
