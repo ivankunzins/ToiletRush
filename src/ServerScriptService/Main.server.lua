@@ -30,8 +30,20 @@ local buyRemote = remote("BuyLifebuoy")
 local feedbackRemote = remote("Feedback")
 local achievementRemote = remote("Achievements")
 
+local dailyRequestAt = {}
+local achievementRequestAt = {}
+
 feedbackRemote.OnServerEvent:Connect(function(player, action)
-    if action ~= "CLAIM_DAILY" then return end
+    if action ~= "CLAIM_DAILY" then
+        return
+    end
+
+    local now = os.clock()
+    if now - (dailyRequestAt[player] or 0) < 1 then
+        return
+    end
+    dailyRequestAt[player] = now
+
     local ok, reward = DataService:ClaimDaily(player)
     if ok then
         feedbackRemote:FireClient(player, "DAILY_SUCCESS", "DAILY +" .. reward .. " COINS")
@@ -41,15 +53,37 @@ feedbackRemote.OnServerEvent:Connect(function(player, action)
 end)
 
 achievementRemote.OnServerEvent:Connect(function(player, action)
-    if action == "GET" then
-        achievementRemote:FireClient(player, "LIST", AchievementService:GetForPlayer(player))
+    if action ~= "GET" then
+        return
     end
+
+    local now = os.clock()
+    if now - (achievementRequestAt[player] or 0) < 0.5 then
+        return
+    end
+    achievementRequestAt[player] = now
+
+    if not DataService:Get(player) then
+        task.delay(0.25, function()
+            if player.Parent and DataService:Get(player) then
+                achievementRemote:FireClient(player, "LIST", AchievementService:GetForPlayer(player))
+            end
+        end)
+        return
+    end
+
+    achievementRemote:FireClient(player, "LIST", AchievementService:GetForPlayer(player))
 end)
 
 Players.PlayerAdded:Connect(function(player)
     player:SetAttribute("HasLifebuoy", false)
     player:SetAttribute("RoundActive", false)
     player:SetAttribute("LastRoundSurvived", false)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    dailyRequestAt[player] = nil
+    achievementRequestAt[player] = nil
 end)
 
 local arena = WorldBuilder:Build()
