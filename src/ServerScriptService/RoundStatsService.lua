@@ -6,6 +6,8 @@ local DEFAULT = {
     RareCoinsCollected = 0,
     HazardsHit = 0,
     DamageTaken = 0,
+    MaxCombo = 0,
+    ComboBonusCoins = 0,
 }
 
 local function fresh()
@@ -14,6 +16,8 @@ local function fresh()
         RareCoinsCollected = 0,
         HazardsHit = 0,
         DamageTaken = 0,
+        MaxCombo = 0,
+        ComboBonusCoins = 0,
     }
 end
 
@@ -24,6 +28,7 @@ function RoundStatsService:Reset(players)
         for key, value in pairs(DEFAULT) do
             player:SetAttribute(key, value)
         end
+        player:SetAttribute("CoinCombo", 0)
     end
 end
 
@@ -31,13 +36,17 @@ function RoundStatsService:Get(player)
     return stats[player] or fresh()
 end
 
-function RoundStatsService:AddCoin(player, value)
+function RoundStatsService:AddCoin(player, value, combo, bonusCoins)
     local s = stats[player]
     if not s then return end
     s.CoinsCollected += value
     if value >= 5 then s.RareCoinsCollected += 1 end
+    s.MaxCombo = math.max(s.MaxCombo, combo or 0)
+    s.ComboBonusCoins += math.max(0, bonusCoins or 0)
     player:SetAttribute("CoinsCollected", s.CoinsCollected)
     player:SetAttribute("RareCoinsCollected", s.RareCoinsCollected)
+    player:SetAttribute("MaxCombo", s.MaxCombo)
+    player:SetAttribute("ComboBonusCoins", s.ComboBonusCoins)
 end
 
 function RoundStatsService:AddHazardHit(player, damage)
