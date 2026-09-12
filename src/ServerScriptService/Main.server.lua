@@ -6,6 +6,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local WorldBuilder = require(ServerScriptService:WaitForChild("WorldBuilder"))
 local BathroomArchitecture = require(ServerScriptService:WaitForChild("BathroomArchitecture"))
 local UpperCourseBuilder = require(ServerScriptService:WaitForChild("UpperCourseBuilder"))
+local VisualEffectsBuilder = require(ServerScriptService:WaitForChild("VisualEffectsBuilder"))
 local DataService = require(ServerScriptService:WaitForChild("DataService"))
 local CoinService = require(ServerScriptService:WaitForChild("CoinService"))
 local ShopService = require(ServerScriptService:WaitForChild("ShopService"))
@@ -105,8 +106,8 @@ end)
 local arena = WorldBuilder:Build()
 BathroomArchitecture:Apply(arena)
 UpperCourseBuilder:Apply(arena)
+VisualEffectsBuilder:Apply(arena)
 
--- WorldBuilder used the old rare-coin label; normalize it after all visual layers are applied.
 local coinsFolder = arena:FindFirstChild("Coins")
 if coinsFolder then
     for _, coin in coinsFolder:GetChildren() do
@@ -124,7 +125,7 @@ AchievementService:Bind(DataService, feedbackRemote)
 ShopService:Bind(buyRemote, DataService, RoundService, feedbackRemote)
 CoinService:BindFeedback(feedbackRemote)
 
-print(("[ToiletRush] Arena ready. Round=%ss, collect=%s points, lifebuoy=%s coins, upper course=ready"):format(
+print(("[ToiletRush] Arena ready. Round=%ss, collect=%s points, lifebuoy=%s coins, upper course=ready, effects=ready"):format(
     Config.Round.Duration,
     Config.Economy.LifebuoyUnlockCollected,
     Config.Economy.LifebuoyCost
