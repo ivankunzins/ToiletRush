@@ -57,6 +57,32 @@ function DataService:MarkRound(player, survived)
     sync(player)
 end
 
+local function write(player, removeAfter)
+    if saving[player] or loadFailed[player] then return false end
+    local data = profiles[player]
+    if not data then return false end
+
+    saving[player] = true
+    local payload = { Coins = data.Coins, Wins = data.Wins, Rounds = data.Rounds }
+    local ok, err = pcall(function()
+        Store:UpdateAsync("p_" .. player.UserId, function()
+            return payload
+        end)
+    end)
+    saving[player] = nil
+
+    if not ok then
+        warn("[ToiletRush] Data save failed for " .. player.Name .. ": " .. tostring(err))
+        return false
+    end
+
+    if removeAfter then
+        profiles[player] = nil
+        loadFailed[player] = nil
+    end
+    return true
+end
+
 local function load(player)
     local data = cloneDefault()
     local ok, saved = pcall(function()
@@ -88,40 +114,25 @@ local function load(player)
     sync(player)
 end
 
-local function save(player)
-    if saving[player] or loadFailed[player] then return end
-    local data = profiles[player]
-    if not data then return end
-    saving[player] = true
-    local payload = { Coins = data.Coins, Wins = data.Wins, Rounds = data.Rounds }
-    local ok, err = pcall(function()
-        Store:UpdateAsync("p_" .. player.UserId, function()
-            return payload
-        end)
-    end)
-    if not ok then
-        warn("[ToiletRush] Data save failed for " .. player.Name .. ": " .. tostring(err))
-    end
-    saving[player] = nil
-    profiles[player] = nil
-    loadFailed[player] = nil
-end
-
 Players.PlayerAdded:Connect(load)
-Players.PlayerRemoving:Connect(save)
+Players.PlayerRemoving:Connect(function(player)
+    write(player, true)
+end)
 
 task.spawn(function()
     while true do
         task.wait(60)
         for _, player in Players:GetPlayers() do
-            task.spawn(save, player)
+            task.spawn(function()
+                write(player, false)
+            end)
         end
     end
 end)
 
 game:BindToClose(function()
     for _, player in Players:GetPlayers() do
-        save(player)
+        write(player, true)
     end
 end)
 
