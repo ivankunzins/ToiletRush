@@ -6,7 +6,10 @@ local Config = require(game.ReplicatedStorage:WaitForChild("Config"))
 local RoundStatsService = require(game.ServerScriptService:WaitForChild("RoundStatsService"))
 
 local arena = Workspace:WaitForChild("ToiletArena", 30)
-if not arena then return end
+if not arena then
+    return
+end
+
 local obstacles = arena:WaitForChild("Obstacles")
 local animated = {}
 local hitAt = {}
@@ -16,11 +19,18 @@ local function damagePlayer(part, hit)
     local player = character and Players:GetPlayerFromCharacter(character)
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     local root = character and character:FindFirstChild("HumanoidRootPart")
-    if not player or player:GetAttribute("RoundActive") ~= true or not humanoid or humanoid.Health <= 0 or not root then return end
+    if not player or player:GetAttribute("RoundActive") ~= true or player:GetAttribute("FlushActive") == true then
+        return
+    end
+    if not humanoid or humanoid.Health <= 0 or not root then
+        return
+    end
 
     local now = os.clock()
     hitAt[player] = hitAt[player] or {}
-    if now - (hitAt[player][part] or 0) < Config.Hazards.Cooldown then return end
+    if now - (hitAt[player][part] or 0) < Config.Hazards.Cooldown then
+        return
+    end
     hitAt[player][part] = now
 
     humanoid:TakeDamage(Config.Hazards.Damage)
@@ -29,7 +39,8 @@ local function damagePlayer(part, hit)
     local away = root.Position - part.Position
     local horizontal = Vector3.new(away.X, 0, away.Z)
     if horizontal.Magnitude > 0.1 then
-        root.AssemblyLinearVelocity = horizontal.Unit * Config.Hazards.Knockback + Vector3.new(0, Config.Hazards.VerticalKnockback, 0)
+        root.AssemblyLinearVelocity = horizontal.Unit * Config.Hazards.Knockback
+            + Vector3.new(0, Config.Hazards.VerticalKnockback, 0)
     end
 end
 
@@ -45,7 +56,8 @@ for _, object in obstacles:GetChildren() do
             motion = motion,
         }
     end
-    if object:IsA("BasePart") then
+
+    if object:IsA("BasePart") and object.CanTouch then
         object.Touched:Connect(function(hit)
             damagePlayer(object, hit)
         end)
