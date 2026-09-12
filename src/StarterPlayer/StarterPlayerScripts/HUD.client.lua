@@ -37,15 +37,16 @@ end
 local timer = text("Timer", UDim2.fromScale(0.30, 0.075), UDim2.fromScale(0.35, 0.025), "WAITING", Enum.Font.GothamBlack)
 local roundLabel = text("Round", UDim2.fromScale(0.22, 0.04), UDim2.fromScale(0.39, 0.095), "ROUND 0", Enum.Font.GothamBold, Color3.fromRGB(220, 230, 235))
 local status = text("Status", UDim2.fromScale(0.62, 0.065), UDim2.fromScale(0.19, 0.145), "GET READY", Enum.Font.GothamBold)
-
 local coins = text("Coins", UDim2.fromScale(0.23, 0.055), UDim2.fromScale(0.025, 0.035), "COINS 0", Enum.Font.GothamBlack, Color3.fromRGB(255, 225, 80))
 local wins = text("Wins", UDim2.fromScale(0.18, 0.045), UDim2.fromScale(0.025, 0.085), "WINS 0", Enum.Font.GothamBold)
 local streak = text("Streak", UDim2.fromScale(0.22, 0.045), UDim2.fromScale(0.025, 0.125), "STREAK 0", Enum.Font.GothamBold)
 local buoy = text("Buoy", UDim2.fromScale(0.29, 0.05), UDim2.fromScale(0.69, 0.035), "LIFEBUOY: NO", Enum.Font.GothamBlack)
 
+local comboLabel = text("Combo", UDim2.fromScale(0.25, 0.055), UDim2.fromScale(0.375, 0.205), "COMBO x0", Enum.Font.GothamBlack, Color3.fromRGB(255, 225, 80))
+comboLabel.Visible = false
+
 local levelPanel = Instance.new("Frame")
 levelPanel.Name = "LevelPanel"
-levelPanel.AnchorPoint = Vector2.new(0, 0)
 levelPanel.Position = UDim2.fromScale(0.025, 0.175)
 levelPanel.Size = UDim2.fromScale(0.25, 0.07)
 levelPanel.BackgroundColor3 = Color3.fromRGB(20, 27, 34)
@@ -92,24 +93,24 @@ xpText.Font = Enum.Font.GothamBold
 xpText.TextScaled = true
 xpText.Parent = levelPanel
 
-local panel = Instance.new("Frame")
-panel.Name = "ProgressPanel"
-panel.AnchorPoint = Vector2.new(1, 0)
-panel.Position = UDim2.fromScale(0.98, 0.11)
-panel.Size = UDim2.fromScale(0.22, 0.15)
-panel.BackgroundColor3 = Color3.fromRGB(20, 27, 34)
-panel.BackgroundTransparency = 0.16
-panel.Parent = gui
+local progressPanel = Instance.new("Frame")
+progressPanel.Name = "ProgressPanel"
+progressPanel.AnchorPoint = Vector2.new(1, 0)
+progressPanel.Position = UDim2.fromScale(0.98, 0.11)
+progressPanel.Size = UDim2.fromScale(0.22, 0.15)
+progressPanel.BackgroundColor3 = Color3.fromRGB(20, 27, 34)
+progressPanel.BackgroundTransparency = 0.16
+progressPanel.Parent = gui
 local pc = Instance.new("UICorner")
 pc.CornerRadius = UDim.new(0, 14)
-pc.Parent = panel
+pc.Parent = progressPanel
 
 local panelTitle = text("Title", UDim2.fromScale(0.88, 0.25), UDim2.fromScale(0.06, 0.07), "PLAYER PROGRESS", Enum.Font.GothamBlack, Color3.fromRGB(180, 220, 235))
-panelTitle.Parent = panel
+panelTitle.Parent = progressPanel
 local roundsText = text("Rounds", UDim2.fromScale(0.88, 0.22), UDim2.fromScale(0.06, 0.36), "ROUNDS 0", Enum.Font.GothamBold)
-roundsText.Parent = panel
+roundsText.Parent = progressPanel
 local bestText = text("Best", UDim2.fromScale(0.88, 0.22), UDim2.fromScale(0.06, 0.61), "BEST STREAK 0", Enum.Font.GothamBold)
-bestText.Parent = panel
+bestText.Parent = progressPanel
 
 local shop = Instance.new("TextButton")
 shop.Name = "LifebuoyButton"
@@ -152,10 +153,10 @@ dc.Parent = daily
 local results = Instance.new("Frame")
 results.Name = "RoundResults"
 results.AnchorPoint = Vector2.new(0.5, 0.5)
-results.Position = UDim2.fromScale(0.5, 0.55)
+results.Position = UDim2.fromScale(0.5, 0.62)
 results.Size = UDim2.fromScale(0.48, 0.44)
 results.BackgroundColor3 = Color3.fromRGB(18, 22, 29)
-results.BackgroundTransparency = 0.04
+results.BackgroundTransparency = 1
 results.Visible = false
 results.ZIndex = 30
 results.Parent = gui
@@ -252,6 +253,12 @@ local function updateStats()
     streak.Text = "STREAK " .. tostring(player:GetAttribute("WinStreak") or 0)
 end
 
+local function updateBuoy()
+    local has = player:GetAttribute("HasLifebuoy") == true
+    buoy.Text = has and "LIFEBUOY: READY" or "LIFEBUOY: NO"
+    if has then shop.Visible = false end
+end
+
 local function updateLevel()
     local level = math.max(1, math.floor(tonumber(player:GetAttribute("Level")) or 1))
     local current = math.max(0, math.floor(tonumber(player:GetAttribute("LevelXP")) or 0))
@@ -259,28 +266,13 @@ local function updateLevel()
     levelText.Text = "LV " .. tostring(level)
     xpText.Text = tostring(current) .. " / " .. tostring(needed) .. " XP"
     local ratio = math.clamp(current / needed, 0, 1)
-    TweenService:Create(xpFill, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Size = UDim2.fromScale(ratio, 1),
-    }):Play()
+    TweenService:Create(xpFill, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.fromScale(ratio, 1)}):Play()
 end
 
-task.spawn(function()
-    while gui.Parent do
-        updateStats()
-        updateLevel()
-        updateBuoy()
-        task.wait(0.2)
-    end
-end)
-
-player:GetAttributeChangedSignal("HasLifebuoy"):Connect(updateBuoy)
-player:GetAttributeChangedSignal("Level"):Connect(updateLevel)
-player:GetAttributeChangedSignal("LevelXP"):Connect(updateLevel)
-player:GetAttributeChangedSignal("LevelNextXP"):Connect(updateLevel)
-
-local function formatSeconds(seconds)
-    seconds = math.max(0, math.floor(tonumber(seconds) or 0))
-    return string.format("%d:%02d", math.floor(seconds / 60), seconds % 60)
+local function updateCombo()
+    local value = math.max(0, math.floor(tonumber(player:GetAttribute("CoinCombo")) or 0))
+    comboLabel.Text = "COMBO x" .. tostring(value)
+    comboLabel.Visible = value > 0
 end
 
 local function showResults(stats, survived)
@@ -289,12 +281,16 @@ local function showResults(stats, survived)
     local rareCoins = tonumber(stats.RareCoinsCollected) or 0
     local hazards = tonumber(stats.HazardsHit) or 0
     local damage = tonumber(stats.DamageTaken) or 0
+    local maxCombo = tonumber(stats.MaxCombo) or 0
+    local bonusCoins = tonumber(stats.ComboBonusCoins) or 0
 
     resultsTitle.Text = survived and "🏆 YOU SURVIVED!" or "💦 YOU GOT FLUSHED!"
     resultsSubtitle.Text = survived and "+" .. tostring(Config.Economy.SurvivalReward) .. " COINS • WIN" or "+" .. tostring(Config.Economy.ParticipationReward) .. " COINS • BETTER LUCK NEXT ROUND"
     resultsStats.Text = table.concat({
         "🪙  Coins collected     " .. tostring(coinsCollected),
         "⭐  Rare coins            " .. tostring(rareCoins),
+        "🔥  Max combo           x" .. tostring(maxCombo),
+        "💰  Combo bonus         +" .. tostring(bonusCoins),
         "💥  Hazard hits          " .. tostring(hazards),
         "❤️  Damage taken       " .. tostring(damage),
     }, "\n")
@@ -315,24 +311,43 @@ local function hideResults()
         BackgroundTransparency = 1,
     })
     tween:Play()
-    tween.Completed:Connect(function()
-        results.Visible = false
-    end)
+    tween.Completed:Once(function() results.Visible = false end)
+end
+
+task.spawn(function()
+    while gui.Parent do
+        updateStats()
+        updateLevel()
+        updateCombo()
+        updateBuoy()
+        task.wait(0.2)
+    end
+end)
+
+player:GetAttributeChangedSignal("HasLifebuoy"):Connect(updateBuoy)
+player:GetAttributeChangedSignal("Level"):Connect(updateLevel)
+player:GetAttributeChangedSignal("LevelXP"):Connect(updateLevel)
+player:GetAttributeChangedSignal("LevelNextXP"):Connect(updateLevel)
+player:GetAttributeChangedSignal("CoinCombo"):Connect(updateCombo)
+
+local function formatSeconds(seconds)
+    seconds = math.max(0, math.floor(tonumber(seconds) or 0))
+    return string.format("%d:%02d", math.floor(seconds / 60), seconds % 60)
 end
 
 stateRemote.OnClientEvent:Connect(function(event, value, roundNumber)
     if event == "INTERMISSION" then
-        hideResults()
         timer.Text = "NEXT ROUND " .. tostring(value)
         status.Text = "GET READY • COLLECT YOUR DAILY REWARD"
         shop.Visible = false
-    elseif event == "ROUND_START" then
         hideResults()
+    elseif event == "ROUND_START" then
         roundLabel.Text = "ROUND " .. tostring(roundNumber or 0)
         timer.Text = formatSeconds(value)
         status.Text = "RUN! COLLECT COINS!"
         shop.Visible = false
         daily.Visible = false
+        hideResults()
     elseif event == "TICK" then
         local seconds = tonumber(value) or 0
         timer.Text = formatSeconds(seconds)
@@ -355,12 +370,9 @@ stateRemote.OnClientEvent:Connect(function(event, value, roundNumber)
         status.Text = "HOLD ON! THE TOILET IS FLUSHING!"
     elseif event == "FLUSH_TICK" then
         status.Text = "FLUSHING... " .. tostring(value) .. "s"
-    elseif event == "ROUND_RESULTS" then
-        local survived = player:GetAttribute("LastRoundSurvived") == true
-        status.Text = "+" .. tostring(survived and Config.Economy.SurvivalReward or Config.Economy.ParticipationReward) .. " COINS • " .. (survived and "YOU SURVIVED!" or "YOU GOT FLUSHED!")
-        daily.Visible = true
     elseif event == "ROUND_STATS" then
         showResults(value, roundNumber == true)
+    elseif event == "ROUND_RESULTS" then
         daily.Visible = true
     end
 end)
@@ -370,16 +382,12 @@ if feedbackRemote then
         if kind == "DAILY_SUCCESS" then
             daily.Text = tostring(message)
             task.delay(2.5, function()
-                if daily.Parent then
-                    daily.Text = "DAILY REWARD"
-                end
+                if daily.Parent then daily.Text = "DAILY REWARD" end
             end)
         elseif kind == "DAILY_ERROR" then
             daily.Text = tostring(message)
             task.delay(1.5, function()
-                if daily.Parent then
-                    daily.Text = "DAILY REWARD"
-                end
+                if daily.Parent then daily.Text = "DAILY REWARD" end
             end)
         end
     end)
@@ -388,30 +396,21 @@ end
 local cameraConnection
 local function fitMobile()
     local camera = workspace.CurrentCamera
-    if not camera then
-        return
-    end
-
+    if not camera then return end
     local viewport = camera.ViewportSize
     if viewport.X < 700 then
         scale.Scale = 0.72
-        panel.Visible = false
-        levelPanel.Visible = true
+        progressPanel.Visible = false
     elseif viewport.X < 1000 then
         scale.Scale = 0.88
-        panel.Visible = true
-        levelPanel.Visible = true
+        progressPanel.Visible = true
     else
         scale.Scale = 1
-        panel.Visible = true
-        levelPanel.Visible = true
+        progressPanel.Visible = true
     end
-
-    if cameraConnection then
-        cameraConnection:Disconnect()
-    end
-    cameraConnection = camera:GetPropertyChangedSignal("ViewportSize").Connect(fitMobile)
+    if cameraConnection then cameraConnection:Disconnect() end
+    cameraConnection = camera:GetPropertyChangedSignal("ViewportSize"):Connect(fitMobile)
 end
 
 fitMobile()
-workspace:GetPropertyChangedSignal("CurrentCamera").Connect(fitMobile)
+workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(fitMobile)
