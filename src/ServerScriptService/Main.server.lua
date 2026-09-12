@@ -25,9 +25,11 @@ end
 
 local stateRemote = remote("GameState")
 local buyRemote = remote("BuyLifebuoy")
+local feedbackRemote = remote("Feedback")
 
 local arena = WorldBuilder:Build()
-ShopService:Bind(buyRemote, DataService, RoundService)
+ShopService:Bind(buyRemote, DataService, RoundService, feedbackRemote)
+CoinService:BindFeedback(feedbackRemote)
 
 print(("[ToiletRush] Arena ready. Round=%ss, Lifebuoy window=%ss, cost=%s coins"):format(
     Config.Round.Duration,
