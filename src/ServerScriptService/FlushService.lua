@@ -52,6 +52,10 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
         end
 
         for _, player in Players:GetPlayers() do
+            if player:GetAttribute("RoundActive") ~= true then
+                continue
+            end
+
             local root = rootOf(player)
             local humanoid = humanoidOf(player)
             if root and humanoid and humanoid.Health > 0 then
@@ -96,6 +100,10 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
 
     local survivedCount = 0
     for _, player in Players:GetPlayers() do
+        if player:GetAttribute("RoundActive") ~= true then
+            continue
+        end
+
         local humanoid = humanoidOf(player)
         local alive = humanoid and humanoid.Health > 0
         local survived = alive and shopService:HasLifebuoy(player)
