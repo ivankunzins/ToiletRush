@@ -105,6 +105,19 @@ end)
 local arena = WorldBuilder:Build()
 BathroomArchitecture:Apply(arena)
 UpperCourseBuilder:Apply(arena)
+
+-- WorldBuilder used the old rare-coin label; normalize it after all visual layers are applied.
+local coinsFolder = arena:FindFirstChild("Coins")
+if coinsFolder then
+    for _, coin in coinsFolder:GetChildren() do
+        if coin.Name:match("^RareCoin") then
+            local labelGui = coin:FindFirstChild("Label")
+            local label = labelGui and labelGui:FindFirstChildOfClass("TextLabel")
+            if label then label.Text = "+" .. tostring(Config.Economy.RareCoinValue) end
+        end
+    end
+end
+
 arena:SetAttribute("BuildComplete", true)
 
 AchievementService:Bind(DataService, feedbackRemote)
