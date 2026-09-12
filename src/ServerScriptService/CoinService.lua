@@ -46,8 +46,17 @@ local function collect(coin, player, dataService)
 
     RoundStatsService:AddCoin(player, value)
 
+    local xp = Config.Progression.CoinXP
+    if value >= Config.Economy.RareCoinValue then
+        xp += Config.Progression.RareCoinBonusXP
+    end
+    local xpOk, levelUp, level = dataService:AddXP(player, xp)
+
     if feedback then
         feedback:FireClient(player, "COIN", "+" .. tostring(value))
+        if xpOk and levelUp then
+            feedback:FireClient(player, "LEVEL_UP", tostring(level))
+        end
     end
 
     task.delay(Config.World.CoinRespawnSeconds, function()
