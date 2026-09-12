@@ -53,12 +53,8 @@ achievementRemote.OnServerEvent:Connect(function(player, action)
     local now = os.clock()
     if now - (achievementRequestAt[player] or 0) < 0.5 then return end
     achievementRequestAt[player] = now
-    if not DataService:Get(player) then
-        task.delay(0.25, function()
-            if player.Parent and DataService:Get(player) then
-                achievementRemote:FireClient(player, "LIST", AchievementService:GetForPlayer(player))
-            end
-        end)
+    if not DataService:IsReady(player) then
+        feedbackRemote:FireClient(player, "LOBBY", "Профиль ещё загружается или недоступен")
         return
     end
     achievementRemote:FireClient(player, "LIST", AchievementService:GetForPlayer(player))
@@ -70,10 +66,12 @@ lobbyRemote.OnServerEvent:Connect(function(player, action)
     if now - (lobbyRequestAt[player] or 0) < 0.5 then return end
     lobbyRequestAt[player] = now
     if player:GetAttribute("RoundActive") == true then return end
-    if action == "PLAY" and not DataService:Get(player) then
-        feedbackRemote:FireClient(player, "LOBBY", "Профиль ещё загружается, подожди секунду")
+
+    if action == "PLAY" and not DataService:IsReady(player) then
+        feedbackRemote:FireClient(player, "LOBBY", "Профиль ещё загружается или не загрузился. Подожди немного и попробуй снова.")
         return
     end
+
     local queued = action == "PLAY"
     player:SetAttribute("Queued", queued)
     player:SetAttribute("LobbyStatus", queued and "QUEUED" or "LOBBY")
@@ -92,6 +90,7 @@ Players.PlayerAdded:Connect(function(player)
     player:SetAttribute("LobbyStatus", "LOBBY")
     player:SetAttribute("CoinsCollected", 0)
     player:SetAttribute("CoinGoalNotified", false)
+    player:SetAttribute("DataReady", false)
 
     task.defer(function()
         RoundService:SyncPlayer(player, stateRemote)
@@ -105,7 +104,6 @@ Players.PlayerRemoving:Connect(function(player)
     lobbyRequestAt[player] = nil
 end)
 
--- Higher quality presentation: glossy bathroom, softer shadows and stronger reflections.
 pcall(function()
     Lighting.Technology = Enum.Technology.Future
 end)
@@ -147,9 +145,7 @@ if flushPrompt then
             feedbackRemote:FireClient(player, "FLUSH_TRIGGERED", "🚽 СМЫВ! ВСЕ ВНИЗУ — В ДЫРКУ!")
             flushPrompt.Enabled = false
             task.delay(Config.Flush.Duration + 1, function()
-                if flushPrompt and flushPrompt.Parent then
-                    flushPrompt.Enabled = true
-                end
+                if flushPrompt and flushPrompt.Parent then flushPrompt.Enabled = true end
             end)
         end
     end)
