@@ -1,58 +1,118 @@
--- Toilet Rush — one-paste Roblox Studio installer
--- Run this entire file in Roblox Studio's Command Bar (Edit mode).
--- First enable: Game Settings > Security > Allow HTTP Requests.
+-- Toilet Rush — reliable one-paste installer v3
+-- Run ONLY in Roblox Studio Edit mode, not while Play/Run is active.
+-- Enable Game Settings > Security > Allow HTTP Requests.
 local HttpService=game:GetService("HttpService")
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local ServerScriptService=game:GetService("ServerScriptService")
 local StarterPlayer=game:GetService("StarterPlayer")
 local StarterPlayerScripts=StarterPlayer:WaitForChild("StarterPlayerScripts")
 local BASE="https://raw.githubusercontent.com/ivankunzins/ToiletRush/main/"
-local files={
-{path="src/ReplicatedStorage/Config.lua",parent=ReplicatedStorage,name="Config",className="ModuleScript"},
-{path="src/ServerScriptService/AchievementService.lua",parent=ServerScriptService,name="AchievementService",className="ModuleScript"},
-{path="src/ServerScriptService/BathroomArchitecture.lua",parent=ServerScriptService,name="BathroomArchitecture",className="ModuleScript"},
-{path="src/ServerScriptService/BossBlasterPatch.server.lua",parent=ServerScriptService,name="BossBlasterPatch",className="Script"},
-{path="src/ServerScriptService/BossMinionService.lua",parent=ServerScriptService,name="BossMinionService",className="ModuleScript"},
-{path="src/ServerScriptService/BossService.lua",parent=ServerScriptService,name="BossService",className="ModuleScript"},
-{path="src/ServerScriptService/CoinService.lua",parent=ServerScriptService,name="CoinService",className="ModuleScript"},
-{path="src/ServerScriptService/DataService.lua",parent=ServerScriptService,name="DataService",className="ModuleScript"},
-{path="src/ServerScriptService/FlushService.lua",parent=ServerScriptService,name="FlushService",className="ModuleScript"},
-{path="src/ServerScriptService/HazardService.server.lua",parent=ServerScriptService,name="HazardService",className="Script"},
-{path="src/ServerScriptService/Main.server.lua",parent=ServerScriptService,name="Main",className="Script"},
-{path="src/ServerScriptService/NPCBuilder.lua",parent=ServerScriptService,name="NPCBuilder",className="ModuleScript"},
-{path="src/ServerScriptService/RobuxShopService.lua",parent=ServerScriptService,name="RobuxShopService",className="ModuleScript"},
-{path="src/ServerScriptService/RoundService.lua",parent=ServerScriptService,name="RoundService",className="ModuleScript"},
-{path="src/ServerScriptService/RoundServiceFixed.lua",parent=ServerScriptService,name="RoundServiceFixed",className="ModuleScript"},
-{path="src/ServerScriptService/RoundStatsService.lua",parent=ServerScriptService,name="RoundStatsService",className="ModuleScript"},
-{path="src/ServerScriptService/ShopService.lua",parent=ServerScriptService,name="ShopService",className="ModuleScript"},
-{path="src/ServerScriptService/UpperCourseV2.lua",parent=ServerScriptService,name="UpperCourseV2",className="ModuleScript"},
-{path="src/ServerScriptService/UpperCourseV3.lua",parent=ServerScriptService,name="UpperCourseV3",className="ModuleScript"},
-{path="src/ServerScriptService/VisualEffectsBuilder.lua",parent=ServerScriptService,name="VisualEffectsBuilder",className="ModuleScript"},
-{path="src/ServerScriptService/WorldBuilder.lua",parent=ServerScriptService,name="WorldBuilder",className="ModuleScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/Achievements.client.lua",parent=StarterPlayerScripts,name="Achievements",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/Audio.client.lua",parent=StarterPlayerScripts,name="Audio",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/BossHUD.client.lua",parent=StarterPlayerScripts,name="BossHUD",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/CoinGoal.client.lua",parent=StarterPlayerScripts,name="CoinGoal",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/ConsistencyPatch.client.lua",parent=StarterPlayerScripts,name="ConsistencyPatch",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/Effects.client.lua",parent=StarterPlayerScripts,name="Effects",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/Feedback.client.lua",parent=StarterPlayerScripts,name="Feedback",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/HUD.client.lua",parent=StarterPlayerScripts,name="HUD",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/LifebuoyButton.client.lua",parent=StarterPlayerScripts,name="LifebuoyButton",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/Menu.client.lua",parent=StarterPlayerScripts,name="Menu",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/StartButtonPatch.client.lua",parent=StarterPlayerScripts,name="StartButtonPatch",className="LocalScript"},
+local VERSION=tostring(os.time())
+
+local paths={
+"src/ReplicatedStorage/Config.lua",
+"src/ServerScriptService/AchievementService.lua",
+"src/ServerScriptService/BathroomArchitecture.lua",
+"src/ServerScriptService/BossBlasterPatch.server.lua",
+"src/ServerScriptService/BossMinionService.lua",
+"src/ServerScriptService/BossService.lua",
+"src/ServerScriptService/CoinService.lua",
+"src/ServerScriptService/DataService.lua",
+"src/ServerScriptService/FlushService.lua",
+"src/ServerScriptService/HazardService.server.lua",
+"src/ServerScriptService/Main.server.lua",
+"src/ServerScriptService/NPCBuilder.lua",
+"src/ServerScriptService/RobuxShopService.lua",
+"src/ServerScriptService/RoundService.lua",
+"src/ServerScriptService/RoundServiceFixed.lua",
+"src/ServerScriptService/RoundStatsService.lua",
+"src/ServerScriptService/ShopService.lua",
+"src/ServerScriptService/UpperCourseV2.lua",
+"src/ServerScriptService/UpperCourseV3.lua",
+"src/ServerScriptService/VisualEffectsBuilder.lua",
+"src/ServerScriptService/WorldBuilder.lua",
+"src/StarterPlayer/StarterPlayerScripts/Achievements.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/Audio.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/BossHUD.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/CoinGoal.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/ConsistencyPatch.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/Effects.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/Feedback.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/HUD.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/LifebuoyButton.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/Menu.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/StartButtonPatch.client.lua",
 }
-local function getSource(path)local ok,result=pcall(function()return HttpService:GetAsync(BASE..path,true)end);if not ok then error("Не удалось скачать "..path.."\n"..tostring(result))end;if type(result)~="string"or#result==0 then error("Пустой исходник: "..path)end;return result end
-local function replace(parent,name,className,source)local old=parent:FindFirstChild(name);if old then old:Destroy()end;local object=Instance.new(className);object.Name=name;object.Source=source;object.Parent=parent end
-print("[ToiletRush] Проверяю исходники...")
-local sources={};for i,item in ipairs(files)do sources[item.path]=getSource(item.path);print(("[ToiletRush] downloaded %d/%d: %s"):format(i,#files,item.name))end
-print("[ToiletRush] Очищаю старую версию...")
-for _,item in ipairs(files)do local old=item.parent:FindFirstChild(item.name);if old then old:Destroy()end end
-local oldBuilder=ServerScriptService:FindFirstChild("UpperCourseBuilder");if oldBuilder then oldBuilder:Destroy()end
-local oldRemotes=ReplicatedStorage:FindFirstChild("Remotes");if oldRemotes then oldRemotes:Destroy()end
-local oldArena=workspace:FindFirstChild("ToiletArena");if oldArena then oldArena:Destroy()end
-print("[ToiletRush] Устанавливаю...")
-for i,item in ipairs(files)do replace(item.parent,item.name,item.className,sources[item.path]);print(("[ToiletRush] installed %d/%d: %s"):format(i,#files,item.name))end
-print("[ToiletRush] ГОТОВО. Нажми Play.")
-print("[ToiletRush] Схема: 180 секунд → 5 круглых этажей → центральный BOSS → 25 помощников → камни/бластер → аварийный смыв босса.")
-print("[ToiletRush] Robux shop: создай 3 Game Pass и вставь IDs в Config.RobuxShop.")
-print("[ToiletRush] Для сохранений: опубликуй игру и включи API Services.")
+
+local function destination(path)
+    if path:sub(1,23)=="src/ReplicatedStorage/" then return ReplicatedStorage end
+    if path:sub(1,24)=="src/ServerScriptService/" then return ServerScriptService end
+    return StarterPlayerScripts
+end
+
+local function objectName(path)
+    local name=path:match("([^/]+)$")
+    name=name:gsub("%.client%.lua$",""):gsub("%.server%.lua$",""):gsub("%.lua$","")
+    return name
+end
+
+local function className(path)
+    if path:find("%.client%.lua$") then return "LocalScript" end
+    if path:find("%.server%.lua$") then return "Script" end
+    return "ModuleScript"
+end
+
+local function download(path)
+    local url=BASE..path.."?installer="..VERSION
+    local ok,result=pcall(function() return HttpService:GetAsync(url,true) end)
+    if not ok then error("DOWNLOAD FAILED: "..path.."\n"..tostring(result)) end
+    if type(result)~="string" or #result<2 then error("EMPTY SOURCE: "..path) end
+    return result
+end
+
+print("[ToiletRush] INSTALLER v3 / "..VERSION)
+if RunService and RunService:IsRunning() then error("STOP PLAY/TEST FIRST. Run installer only in Edit mode.") end
+
+local sources={}
+for i,path in ipairs(paths) do
+    sources[path]=download(path)
+    print(("[ToiletRush] download %d/%d OK: %s"):format(i,#paths,path))
+end
+
+local upper=sources["src/ServerScriptService/UpperCourseV3.lua"]
+assert(upper:find("FIVE COMPLETE FLOORS",1,true),"UPPERCOURSE VALIDATION FAILED: downloaded file is not the five-floor version")
+assert(sources["src/ServerScriptService/BossMinionService.lua"]:find("BossMinion",1,true),"MINION VALIDATION FAILED")
+assert(sources["src/ServerScriptService/Main.server.lua"]:find("BossMinionService",1,true),"MAIN VALIDATION FAILED")
+print("[ToiletRush] VALIDATION OK: 5 floors + boss + 25 minions")
+
+local oldArena=workspace:FindFirstChild("ToiletArena")
+if oldArena then oldArena:Destroy() end
+local oldBuilder=ServerScriptService:FindFirstChild("UpperCourseBuilder")
+if oldBuilder then oldBuilder:Destroy() end
+
+local function install(path,source)
+    local parent=destination(path)
+    local name=objectName(path)
+    local old=parent:FindFirstChild(name)
+    if old then old:Destroy() end
+    local obj=Instance.new(className(path))
+    obj.Name=name
+    obj.Source=source
+    obj.Parent=parent
+end
+
+for i,path in ipairs(paths) do
+    install(path,sources[path])
+    print(("[ToiletRush] installed %d/%d: %s"):format(i,#paths,objectName(path)))
+end
+
+local marker=ServerScriptService:FindFirstChild("ToiletRushInstallVersion") or Instance.new("StringValue")
+marker.Name="ToiletRushInstallVersion"
+marker.Value="v3-"..VERSION
+marker.Parent=ServerScriptService
+
+print("[ToiletRush] =============================")
+print("[ToiletRush] INSTALL COMPLETE v3")
+print("[ToiletRush] 5 FLOORS + BOSS + 25 MINIONS")
+print("[ToiletRush] Now press PLAY")
+print("[ToiletRush] =============================")
