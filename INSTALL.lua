@@ -31,6 +31,7 @@ local files={
 {path="src/ServerScriptService/WorldBuilder.lua",parent=ServerScriptService,name="WorldBuilder",className="ModuleScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/Achievements.client.lua",parent=StarterPlayerScripts,name="Achievements",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/Audio.client.lua",parent=StarterPlayerScripts,name="Audio",className="LocalScript"},
+{path="src/StarterPlayer/StarterPlayerScripts/BossHUD.client.lua",parent=StarterPlayerScripts,name="BossHUD",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/CoinGoal.client.lua",parent=StarterPlayerScripts,name="CoinGoal",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/ConsistencyPatch.client.lua",parent=StarterPlayerScripts,name="ConsistencyPatch",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/Effects.client.lua",parent=StarterPlayerScripts,name="Effects",className="LocalScript"},
@@ -64,6 +65,6 @@ local oldArena=workspace:FindFirstChild("ToiletArena");if oldArena then oldArena
 print("[ToiletRush] Устанавливаю...")
 for i,item in ipairs(files)do replace(item.parent,item.name,item.className,sources[item.path]);print(("[ToiletRush] installed %d/%d: %s"):format(i,#files,item.name))end
 print("[ToiletRush] ГОТОВО. Нажми Play.")
-print("[ToiletRush] Новая схема: 180 секунд подъёма → 5 этажей → центральный BOSS → камни/бластер → аварийный смыв босса.")
+print("[ToiletRush] Схема: 180 секунд подъёма → 5 этажей → центральный BOSS → камни/бластер → аварийный смыв босса.")
 print("[ToiletRush] Robux shop: создай 3 Game Pass и вставь IDs в Config.RobuxShop.")
 print("[ToiletRush] Для сохранений: опубликуй игру и включи API Services.")
