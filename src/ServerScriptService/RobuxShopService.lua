@@ -9,9 +9,9 @@ local function giveVest(player)
     local char=player.Character;if not char or char:FindFirstChild("RobuxVestVisual") then return end
     local torso=char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso");local root=char:FindFirstChild("HumanoidRootPart");if not torso or not root then return end
     local model=Instance.new("Model");model.Name="RobuxVestVisual";model.Parent=char
-    local front=Instance.new("Part");front.Name="VestFront";front.Size=Vector3.new(3.2,3.4,0.35);front.Color=Color3.fromRGB(245,120,35);front.Material=Enum.Material.SmoothPlastic;front.CanCollide=false;front.CanTouch=false;front.CanQuery=false;front.Massless=true;front.CFrame=torso.CFrame*CFrame.new(0,0,-0.95);front.Parent=model
-    local back=front:Clone();back.Name="VestBack";back.CFrame=torso.CFrame*CFrame.new(0,0,0.95);back.Parent=model
-    for _,x in ipairs({-1.7,1.7}) do local strap=Instance.new("Part");strap.Name="VestStrap";strap.Size=Vector3.new(0.35,3.5,2.05);strap.Color=Color3.fromRGB(35,35,38);strap.CanCollide=false;strap.CanTouch=false;strap.CanQuery=false;strap.Massless=true;strap.CFrame=torso.CFrame*CFrame.new(x*0.7,0,0);strap.Parent=model;local w=Instance.new("WeldConstraint");w.Part0=strap;w.Part1=torso;w.Parent=strap end
+    local front=Instance.new("Part");front.Name="VestFront";front.Size=Vector3.new(3.2,3.4,.35);front.Color=Color3.fromRGB(245,120,35);front.Material=Enum.Material.SmoothPlastic;front.CanCollide=false;front.CanTouch=false;front.CanQuery=false;front.Massless=true;front.CFrame=torso.CFrame*CFrame.new(0,0,-.95);front.Parent=model
+    local back=front:Clone();back.Name="VestBack";back.CFrame=torso.CFrame*CFrame.new(0,0,.95);back.Parent=model
+    for _,x in ipairs({-1.7,1.7}) do local strap=Instance.new("Part");strap.Name="VestStrap";strap.Size=Vector3.new(.35,3.5,2.05);strap.Color=Color3.fromRGB(35,35,38);strap.CanCollide=false;strap.CanTouch=false;strap.CanQuery=false;strap.Massless=true;strap.CFrame=torso.CFrame*CFrame.new(x*.7,0,0);strap.Parent=model;local w=Instance.new("WeldConstraint");w.Part0=strap;w.Part1=torso;w.Parent=strap end
     for _,x in ipairs({front,back}) do local w=Instance.new("WeldConstraint");w.Part0=x;w.Part1=torso;w.Parent=x end
 end
 local function giveBlaster(player)
@@ -24,7 +24,17 @@ local function giveBlaster(player)
         local char=player.Character;local root=char and char:FindFirstChild("HumanoidRootPart");if not root then return end
         local target,best=nil,45
         for _,other in Players:GetPlayers() do if other~=player and other:GetAttribute("RoundActive") and other.Character then local r=other.Character:FindFirstChild("HumanoidRootPart");if r then local d=r.Position-root.Position;local dist=d.Magnitude;if dist<best and dist>1 and root.CFrame.LookVector:Dot(d.Unit)>.35 then target,best=other,dist end end end end
-        if target then local r=target.Character and target.Character:FindFirstChild("HumanoidRootPart");if r then r.AssemblyLinearVelocity=root.CFrame.LookVector*78+Vector3.new(0,14,0)end end
+        if target then
+            local r=target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+            if r then
+                if target:GetAttribute("RobuxVest")==true then
+                    feedback(player,"VEST_BLOCK","🦺 ЖИЛЕТ ЗАЩИТИЛ ИГРОКА ОТ БЛАСТЕРА!")
+                    feedback(target,"VEST_BLOCK","🦺 ЖИЛЕТ ЗАЩИТИЛ ТЕБЯ ОТ БЛАСТЕРА!")
+                else
+                    r.AssemblyLinearVelocity=root.CFrame.LookVector*78+Vector3.new(0,14,0)
+                end
+            end
+        end
     end);tool.Parent=backpack
 end
 local function grant(player,key)
