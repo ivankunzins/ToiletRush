@@ -17,6 +17,16 @@ Config.Economy = {
     ParticipationReward = 10,
 }
 
+Config.RobuxShop = {
+    -- Create Developer Products in Creator Dashboard and paste their IDs here.
+    LifebuoyProductId = 0, -- 10 Robux
+    VestProductId = 0,     -- 20 Robux
+    BlasterProductId = 0,  -- 40 Robux
+    LifebuoyPrice = 10,
+    VestPrice = 20,
+    BlasterPrice = 40,
+}
+
 Config.Progression = {
     CoinXP = 4,
     RareCoinBonusXP = 8,
