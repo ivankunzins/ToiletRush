@@ -18,10 +18,9 @@ Config.Economy = {
 }
 
 Config.RobuxShop = {
-    -- Create 3 Game Passes in Creator Dashboard and paste their IDs here.
-    LifebuoyPassId = 0, -- 10 Robux
-    VestPassId = 0,     -- 20 Robux
-    BlasterPassId = 0,  -- 40 Robux
+    LifebuoyPassId = 0,
+    VestPassId = 0,
+    BlasterPassId = 0,
     LifebuoyPrice = 10,
     VestPrice = 20,
     BlasterPrice = 40,
@@ -50,7 +49,7 @@ Config.World = {
     CoinPickupRadius = 5.5,
     ObstacleCount = 0,
     SpawnCount = 16,
-    Floors = 3,
+    Floors = 5,
     FloorHeight = 18,
 }
 
@@ -61,13 +60,26 @@ Config.Hazards = {
     VerticalKnockback = 14,
 }
 
+Config.Boss = {
+    Health = 30,
+    BlasterDamage = 3,
+    StoneDamage = 1,
+    AttackInterval = 2.2,
+    AttackDamage = 12,
+    FlushHoldSeconds = 10,
+    FlushRecoverySeconds = 1.25,
+    AttackRange = 110,
+    Height = 72,
+    StoneCount = 30,
+}
+
 Config.Flush = {
     Duration = 10,
     PullRadius = 115,
     PullStrength = 125,
     SpinStrength = 52,
     SinkDepth = 34,
-    SafeTopPosition = Vector3.new(0, 79, -12),
+    SafeTopPosition = Vector3.new(0, 95, -12),
 }
 
 Config.Audio = {
