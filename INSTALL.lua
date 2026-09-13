@@ -35,7 +35,7 @@ local files={
 {path="src/StarterPlayer/StarterPlayerScripts/CoinGoal.client.lua",parent=StarterPlayerScripts,name="CoinGoal",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/ConsistencyPatch.client.lua",parent=StarterPlayerScripts,name="ConsistencyPatch",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/Effects.client.lua",parent=StarterPlayerScripts,name="Effects",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/Feedback.client.lua",parent=StarterPlayerScripts,name="Feedback",className="Feedback"},
+{path="src/StarterPlayer/StarterPlayerScripts/Feedback.client.lua",parent=StarterPlayerScripts,name="Feedback",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/HUD.client.lua",parent=StarterPlayerScripts,name="HUD",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/LifebuoyButton.client.lua",parent=StarterPlayerScripts,name="LifebuoyButton",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/Menu.client.lua",parent=StarterPlayerScripts,name="Menu",className="LocalScript"},
