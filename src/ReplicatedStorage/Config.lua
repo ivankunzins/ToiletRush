@@ -68,7 +68,7 @@ Config.Boss = {
     AttackDamage = 12,
     FlushHoldSeconds = 10,
     FlushRecoverySeconds = 1.25,
-    AttackRange = 110,
+    AttackRange = 150,
     Height = 72,
     StoneCount = 30,
 }
