@@ -36,6 +36,7 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
     end
 
     local center = Vector3.new(0, 13, 0)
+    local safeTop = Config.Flush.SafeTopPosition
     local started = os.clock()
     local connection
 
@@ -59,10 +60,11 @@ function FlushService:Run(arena, shopService, dataService, stateRemote)
             local root = rootOf(player)
             local humanoid = humanoidOf(player)
             if root and humanoid and humanoid.Health > 0 then
-                -- Reaching the throne is the other way to survive a manual flush.
+                -- Players who reach the throne are locked safely onto the pedestal during the flush.
                 if player:GetAttribute("ReachedTop") == true then
                     humanoid.AutoRotate = false
-                    root.AssemblyLinearVelocity = Vector3.new(0, 4, 0)
+                    local delta = safeTop - root.Position
+                    root.AssemblyLinearVelocity = delta * 8 + Vector3.new(0, 2, 0)
                     root.AssemblyAngularVelocity = Vector3.new(0, 1.5, 0)
                 elseif shopService:HasLifebuoy(player) then
                     humanoid.AutoRotate = false
