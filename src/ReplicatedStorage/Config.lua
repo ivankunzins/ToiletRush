@@ -18,10 +18,10 @@ Config.Economy = {
 }
 
 Config.RobuxShop = {
-    -- Create Developer Products in Creator Dashboard and paste their IDs here.
-    LifebuoyProductId = 0,
-    VestProductId = 0,
-    BlasterProductId = 0,
+    -- Create 3 Game Passes in Creator Dashboard and paste their IDs here.
+    LifebuoyPassId = 0, -- 10 Robux
+    VestPassId = 0,     -- 20 Robux
+    BlasterPassId = 0,  -- 40 Robux
     LifebuoyPrice = 10,
     VestPrice = 20,
     BlasterPrice = 40,
@@ -48,7 +48,6 @@ Config.World = {
     RareCoinCount = 4,
     CoinRespawnSeconds = 3,
     CoinPickupRadius = 5.5,
-    -- Base/first floor is intentionally hazard-free. UpperCourseV2 creates only upper hazards.
     ObstacleCount = 0,
     SpawnCount = 16,
     Floors = 3,
