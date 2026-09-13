@@ -12,6 +12,7 @@ local files={
 {path="src/ServerScriptService/AchievementService.lua",parent=ServerScriptService,name="AchievementService",className="ModuleScript"},
 {path="src/ServerScriptService/BathroomArchitecture.lua",parent=ServerScriptService,name="BathroomArchitecture",className="ModuleScript"},
 {path="src/ServerScriptService/BossBlasterPatch.server.lua",parent=ServerScriptService,name="BossBlasterPatch",className="Script"},
+{path="src/ServerScriptService/BossMinionService.lua",parent=ServerScriptService,name="BossMinionService",className="ModuleScript"},
 {path="src/ServerScriptService/BossService.lua",parent=ServerScriptService,name="BossService",className="ModuleScript"},
 {path="src/ServerScriptService/CoinService.lua",parent=ServerScriptService,name="CoinService",className="ModuleScript"},
 {path="src/ServerScriptService/DataService.lua",parent=ServerScriptService,name="DataService",className="ModuleScript"},
@@ -34,7 +35,7 @@ local files={
 {path="src/StarterPlayer/StarterPlayerScripts/CoinGoal.client.lua",parent=StarterPlayerScripts,name="CoinGoal",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/ConsistencyPatch.client.lua",parent=StarterPlayerScripts,name="ConsistencyPatch",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/Effects.client.lua",parent=StarterPlayerScripts,name="Effects",className="LocalScript"},
-{path="src/StarterPlayer/StarterPlayerScripts/Feedback.client.lua",parent=StarterPlayerScripts,name="Feedback",className="LocalScript"},
+{path="src/StarterPlayer/StarterPlayerScripts/Feedback.client.lua",parent=StarterPlayerScripts,name="Feedback",className="Feedback"},
 {path="src/StarterPlayer/StarterPlayerScripts/HUD.client.lua",parent=StarterPlayerScripts,name="HUD",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/LifebuoyButton.client.lua",parent=StarterPlayerScripts,name="LifebuoyButton",className="LocalScript"},
 {path="src/StarterPlayer/StarterPlayerScripts/Menu.client.lua",parent=StarterPlayerScripts,name="Menu",className="LocalScript"},
@@ -52,6 +53,6 @@ local oldArena=workspace:FindFirstChild("ToiletArena");if oldArena then oldArena
 print("[ToiletRush] Устанавливаю...")
 for i,item in ipairs(files)do replace(item.parent,item.name,item.className,sources[item.path]);print(("[ToiletRush] installed %d/%d: %s"):format(i,#files,item.name))end
 print("[ToiletRush] ГОТОВО. Нажми Play.")
-print("[ToiletRush] Схема: 180 секунд → 5 круглых этажей → центральный BOSS → камни/бластер → аварийный смыв босса.")
+print("[ToiletRush] Схема: 180 секунд → 5 круглых этажей → центральный BOSS → 25 помощников → камни/бластер → аварийный смыв босса.")
 print("[ToiletRush] Robux shop: создай 3 Game Pass и вставь IDs в Config.RobuxShop.")
 print("[ToiletRush] Для сохранений: опубликуй игру и включи API Services.")
