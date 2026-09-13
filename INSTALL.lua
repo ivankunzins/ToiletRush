@@ -1,4 +1,4 @@
--- Toilet Rush — reliable one-paste installer v4
+-- Toilet Rush — reliable one-paste installer v5
 -- Run ONLY in Roblox Studio Edit mode, not while Play/Run is active.
 -- Enable Game Settings > Security > Allow HTTP Requests.
 local HttpService=game:GetService("HttpService")
@@ -9,7 +9,6 @@ local StarterPlayer=game:GetService("StarterPlayer")
 local StarterPlayerScripts=StarterPlayer:WaitForChild("StarterPlayerScripts")
 local BASE="https://raw.githubusercontent.com/ivankunzins/ToiletRush/main/"
 local VERSION=tostring(os.time())
-
 assert(not RunService:IsRunning(),"STOP PLAY/TEST FIRST. Run installer only in Edit mode.")
 
 local paths={
@@ -53,30 +52,25 @@ local function destination(path)
     if path:match("^src/StarterPlayer/StarterPlayerScripts/") then return StarterPlayerScripts end
     error("UNKNOWN DESTINATION: "..path)
 end
-
 local function objectName(path)
     local name=path:match("([^/]+)$")
     return name:gsub("%.client%.lua$",""):gsub("%.server%.lua$",""):gsub("%.lua$","")
 end
-
 local function className(path)
     if path:match("%.client%.lua$") then return "LocalScript" end
     if path:match("%.server%.lua$") then return "Script" end
     return "ModuleScript"
 end
-
 local function download(path)
-    local url=BASE..path.."?installer="..VERSION
-    local ok,result=pcall(function() return HttpService:GetAsync(url,true) end)
+    local ok,result=pcall(function() return HttpService:GetAsync(BASE..path.."?installer="..VERSION,true) end)
     if not ok then error("DOWNLOAD FAILED: "..path.."\n"..tostring(result)) end
     assert(type(result)=="string" and #result>1,"EMPTY SOURCE: "..path)
     return result
 end
 
 print("[ToiletRush] =============================")
-print("[ToiletRush] INSTALLER v4 / "..VERSION)
+print("[ToiletRush] INSTALLER v5 / "..VERSION)
 print("[ToiletRush] Downloading fresh sources...")
-
 local sources={}
 for i,path in ipairs(paths) do
     sources[path]=download(path)
@@ -84,40 +78,36 @@ for i,path in ipairs(paths) do
 end
 
 local upper=sources["src/ServerScriptService/UpperCourseV3.lua"]
-assert(upper:find("FIVE COMPLETE FLOORS",1,true),"VALIDATION FAILED: UpperCourseV3 is not the 5-floor build")
-assert(sources["src/ServerScriptService/Main.server.lua"]:find("UpperCourseV3",1,true),"VALIDATION FAILED: Main is outdated")
-assert(sources["src/ServerScriptService/Main.server.lua"]:find("BossMinionService",1,true),"VALIDATION FAILED: BossMinionService is not connected")
-assert(sources["src/ServerScriptService/BossMinionService.lua"]:find("BossMinion",1,true),"VALIDATION FAILED: BossMinionService source")
-print("[ToiletRush] VALIDATION OK: 5 floors / boss / 25 minions")
+assert(upper:find("SpiralRoute",1,true),"VALIDATION FAILED: spiral route not downloaded")
+assert(upper:find("FiveFloorsReady",1,true),"VALIDATION FAILED: five-floor flag missing")
+assert(sources["src/ServerScriptService/Main.server.lua"]:find("BossMinionService",1,true),"VALIDATION FAILED: minions are not connected")
+assert(sources["src/ServerScriptService/BossMinionService.lua"]:find("BossMinion",1,true),"VALIDATION FAILED: minion source")
+assert(sources["src/StarterPlayer/StarterPlayerScripts/HUD.client.lua"]:find("BOSS_START",1,true),"VALIDATION FAILED: HUD source")
+print("[ToiletRush] VALIDATION OK: spiral + 5 floors + boss + 25 minions + compact HUD")
 
--- Remove only generated runtime objects and legacy builder. Do this AFTER all downloads succeeded.
+-- Destroy generated runtime objects only after every source downloaded and validated.
 local oldArena=workspace:FindFirstChild("ToiletArena")
 if oldArena then oldArena:Destroy() end
 local oldBuilder=ServerScriptService:FindFirstChild("UpperCourseBuilder")
 if oldBuilder then oldBuilder:Destroy() end
 
-local function install(path,source)
+for i,path in ipairs(paths) do
     local parent=destination(path)
     local name=objectName(path)
     local old=parent:FindFirstChild(name)
     if old then old:Destroy() end
     local obj=Instance.new(className(path))
     obj.Name=name
-    obj.Source=source
+    obj.Source=sources[path]
     obj.Parent=parent
-end
-
-for i,path in ipairs(paths) do
-    install(path,sources[path])
-    print(("[ToiletRush] %02d/%02d installed: %s"):format(i,#paths,objectName(path)))
+    print(("[ToiletRush] %02d/%02d installed: %s"):format(i,#paths,name))
 end
 
 local marker=ServerScriptService:FindFirstChild("ToiletRushInstallVersion") or Instance.new("StringValue")
-marker.Name="ToiletRushInstallVersion"
-marker.Value="v4-"..VERSION
-marker.Parent=ServerScriptService
-
-print("[ToiletRush] INSTALL COMPLETE")
-print("[ToiletRush] 5 FLOORS + CENTRAL BOSS + 25 MINIONS")
-print("[ToiletRush] IMPORTANT: now press PLAY")
+marker.Name="ToiletRushInstallVersion";marker.Value="v5-"..VERSION;marker.Parent=ServerScriptService
+print("[ToiletRush] =============================")
+print("[ToiletRush] INSTALL COMPLETE v5")
+print("[ToiletRush] SPIRAL COURSE + 5 FLOORS + BOSS + 25 MINIONS")
+print("[ToiletRush] COMPACT HUD + MOVING VISUAL NPCs")
+print("[ToiletRush] Now press PLAY")
 print("[ToiletRush] =============================")
