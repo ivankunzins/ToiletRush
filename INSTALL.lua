@@ -13,6 +13,8 @@ local files={
 {path="src/ReplicatedStorage/Config.lua",parent=ReplicatedStorage,name="Config",className="ModuleScript"},
 {path="src/ServerScriptService/AchievementService.lua",parent=ServerScriptService,name="AchievementService",className="ModuleScript"},
 {path="src/ServerScriptService/BathroomArchitecture.lua",parent=ServerScriptService,name="BathroomArchitecture",className="ModuleScript"},
+{path="src/ServerScriptService/BossBlasterPatch.server.lua",parent=ServerScriptService,name="BossBlasterPatch",className="Script"},
+{path="src/ServerScriptService/BossService.lua",parent=ServerScriptService,name="BossService",className="ModuleScript"},
 {path="src/ServerScriptService/CoinService.lua",parent=ServerScriptService,name="CoinService",className="ModuleScript"},
 {path="src/ServerScriptService/DataService.lua",parent=ServerScriptService,name="DataService",className="ModuleScript"},
 {path="src/ServerScriptService/FlushService.lua",parent=ServerScriptService,name="FlushService",className="ModuleScript"},
@@ -55,10 +57,13 @@ for i,item in ipairs(files)do sources[item.path]=getSource(item.path);print(("[T
 print("[ToiletRush] Очищаю старую версию...")
 for _,item in ipairs(files)do local old=item.parent:FindFirstChild(item.name);if old then old:Destroy()end end
 local oldBuilder=ServerScriptService:FindFirstChild("UpperCourseBuilder");if oldBuilder then oldBuilder:Destroy()end
+local oldBossPatch=ServerScriptService:FindFirstChild("BossBlasterPatch");if oldBossPatch then oldBossPatch:Destroy()end
+local oldBossService=ServerScriptService:FindFirstChild("BossService");if oldBossService then oldBossService:Destroy()end
 local oldRemotes=ReplicatedStorage:FindFirstChild("Remotes");if oldRemotes then oldRemotes:Destroy()end
 local oldArena=workspace:FindFirstChild("ToiletArena");if oldArena then oldArena:Destroy()end
 print("[ToiletRush] Устанавливаю...")
 for i,item in ipairs(files)do replace(item.parent,item.name,item.className,sources[item.path]);print(("[ToiletRush] installed %d/%d: %s"):format(i,#files,item.name))end
 print("[ToiletRush] ГОТОВО. Нажми Play.")
+print("[ToiletRush] Новая схема: 180 секунд подъёма → 5 этажей → центральный BOSS → камни/бластер → аварийный смыв босса.")
 print("[ToiletRush] Robux shop: создай 3 Game Pass и вставь IDs в Config.RobuxShop.")
 print("[ToiletRush] Для сохранений: опубликуй игру и включи API Services.")
