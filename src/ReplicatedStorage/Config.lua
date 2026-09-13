@@ -2,7 +2,6 @@ local Config = {}
 
 Config.Round = {
     Duration = 180,
-    LifebuoyWindow = 20,
     Intermission = 10,
     ResultsDuration = 7,
     MinimumPlayers = 1,
@@ -35,7 +34,6 @@ Config.Progression = {
 Config.World = {
     ArenaRadius = 105,
     ArenaY = 12,
-    -- Fewer, more valuable coins: the route stays readable instead of looking like a coin field.
     CoinCount = 24,
     RareCoinCount = 4,
     CoinRespawnSeconds = 3,
@@ -59,12 +57,12 @@ Config.Flush = {
     PullStrength = 125,
     SpinStrength = 52,
     SinkDepth = 34,
+    SafeTopPosition = Vector3.new(0, 79, -12),
 }
 
 Config.Audio = {
     CoinSoundId = "rbxassetid://6787582810",
     RareCoinSoundId = "rbxassetid://6787582810",
-    -- Roblox Creator Hub uses this upbeat track as its 2D background-audio example.
     MusicSoundId = "rbxassetid://1841461968",
     CoinVolume = 0.65,
     RareCoinVolume = 0.9,
