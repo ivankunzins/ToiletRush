@@ -15,6 +15,7 @@ local FlushService=require(ServerScriptService:WaitForChild("FlushService"))
 local RoundService=require(ServerScriptService:WaitForChild("RoundServiceFixed"))
 local AchievementService=require(ServerScriptService:WaitForChild("AchievementService"))
 local RobuxShopService=require(ServerScriptService:WaitForChild("RobuxShopService"))
+local BossService=require(ServerScriptService:WaitForChild("BossService"))
 local remotes=ReplicatedStorage:FindFirstChild("Remotes") or Instance.new("Folder");remotes.Name="Remotes";remotes.Parent=ReplicatedStorage
 local function remote(name)local r=remotes:FindFirstChild(name);if not r then r=Instance.new("RemoteEvent");r.Name=name;r.Parent=remotes end;return r end
 local stateRemote=remote("GameState");local buyRemote=remote("BuyLifebuoy");local feedbackRemote=remote("Feedback");local achievementRemote=remote("Achievements");local lobbyRemote=remote("LobbyAction")
@@ -26,10 +27,15 @@ Players.PlayerAdded:Connect(function(player)for _,a in ipairs({"HasLifebuoy","Li
 Players.PlayerRemoving:Connect(function(player)dailyRequestAt[player]=nil;achievementRequestAt[player]=nil;lobbyRequestAt[player]=nil end)
 pcall(function()Lighting.Technology=Enum.Technology.Future end);Lighting.GlobalShadows=true;Lighting.ShadowSoftness=.22;Lighting.EnvironmentDiffuseScale=.85;Lighting.EnvironmentSpecularScale=1;Lighting.ExposureCompensation=.1
 local arena=WorldBuilder:Build();BathroomArchitecture:Apply(arena);local flushPrompt=UpperCourseBuilder:Apply(arena);NPCBuilder:Apply(arena);VisualEffectsBuilder:Apply(arena)
--- Keep the bathroom bright through materials and selected lamps, not a forest of glowing strips.
 for _,obj in ipairs(arena:GetDescendants())do if obj:IsA("BasePart")then if obj.Name:match("NeonEdge")or obj.Name:match("RouteMarker")or obj.Name:match("NeonRim")then obj:Destroy()elseif obj.Name:match("RouteArrow")then obj.Material=Enum.Material.SmoothPlastic;obj.Transparency=.18 end end end
 local coinsFolder=arena:FindFirstChild("Coins");if coinsFolder then for _,coin in coinsFolder:GetChildren()do if coin.Name:match("^RareCoin")then local g=coin:FindFirstChild("Label");local l=g and g:FindFirstChildOfClass("TextLabel");if l then l.Text="+"..tostring(Config.Economy.RareCoinValue)end end end end
-arena:SetAttribute("BuildComplete",true);AchievementService:Bind(DataService,feedbackRemote);ShopService:Bind(buyRemote,DataService,RoundService,feedbackRemote);RobuxShopService:Bind();RobuxShopService:Apply(arena);CoinService:BindFeedback(feedbackRemote)
-if flushPrompt then flushPrompt.Triggered:Connect(function(player)if RoundService.State~="ROUND"or player:GetAttribute("RoundActive")~=true or player:GetAttribute("FlushActive")then return end;player:SetAttribute("ReachedTop",true);if RoundService:RequestFlush(player)then feedbackRemote:FireClient(player,"FLUSH_TRIGGERED","🚽 СМЫВ! ВСЕ ВНИЗУ — В ДЫРКУ!");flushPrompt.Enabled=false;task.delay(Config.Flush.Duration+1,function()if flushPrompt and flushPrompt.Parent then flushPrompt.Enabled=true end end)end end)end
-print("[ToiletRush] Ready: safe floor 1 / readable 3-floor ascent / NPC crowd / Robux shop / reduced neon")
-task.spawn(function()RoundService:Run(arena,stateRemote,CoinService,ShopService,FlushService,DataService,AchievementService)end)
+arena:SetAttribute("BuildComplete",true)
+AchievementService:Bind(DataService,feedbackRemote);ShopService:Bind(buyRemote,DataService,RoundService,feedbackRemote);RobuxShopService:Bind();RobuxShopService:Apply(arena);CoinService:BindFeedback(feedbackRemote)
+if flushPrompt then
+    flushPrompt.Triggered:Connect(function(player)
+        if RoundService.State~="BOSS" or player:GetAttribute("RoundActive")~=true then return end
+        if BossService:TriggerFlush(player) then feedbackRemote:FireClient(player,"FLUSH_TRIGGERED","🚽 БОСС ПРОВАЛИЛСЯ! ДЕРЖИТСЯ 10 СЕКУНД!") end
+    end)
+end
+print("[ToiletRush] Ready: detailed floor 1 / five circular floors / 180s ascent / central boss / stones / emergency boss flush")
+task.spawn(function()RoundService:Run(arena,stateRemote,CoinService,ShopService,FlushService,DataService,AchievementService,BossService)end)
