@@ -1,18 +1,40 @@
 local MarketplaceService=game:GetService("MarketplaceService")
 local Players=game:GetService("Players")
+local TweenService=game:GetService("TweenService")
 local Config=require(game.ReplicatedStorage:WaitForChild("Config"))
 local Shop={};local bound=false
 local PRODUCTS={Lifebuoy=Config.RobuxShop.LifebuoyPassId,Vest=Config.RobuxShop.VestPassId,Blaster=Config.RobuxShop.BlasterPassId}
 local NAMES={Lifebuoy="🛟 СПАСАТЕЛЬНЫЙ КРУГ  •  10 ROBUX",Vest="🦺 СПАСАТЕЛЬНЫЙ ЖИЛЕТ  •  20 ROBUX",Blaster="🔫 БЛАСТЕР  •  40 ROBUX"}
 local function feedback(player,kind,text)local rem=game.ReplicatedStorage:FindFirstChild("Remotes");local fb=rem and rem:FindFirstChild("Feedback");if fb then fb:FireClient(player,kind,text)end end
+local function weld(part,torso)local w=Instance.new("WeldConstraint");w.Part0=part;w.Part1=torso;w.Parent=part end
+local function piece(model,torso,name,size,cf,color,material,transparency)
+    local p=Instance.new("Part");p.Name=name;p.Size=size;p.CFrame=cf;p.Color=color;p.Material=material or Enum.Material.SmoothPlastic;p.Transparency=transparency or 0;p.CanCollide=false;p.CanTouch=false;p.CanQuery=false;p.Massless=true;p.CastShadow=true;p.Parent=model;weld(p,torso);return p
+end
 local function giveVest(player)
     local char=player.Character;if not char or char:FindFirstChild("RobuxVestVisual") then return end
-    local torso=char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso");local root=char:FindFirstChild("HumanoidRootPart");if not torso or not root then return end
+    local torso=char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso");if not torso then return end
     local model=Instance.new("Model");model.Name="RobuxVestVisual";model.Parent=char
-    local front=Instance.new("Part");front.Name="VestFront";front.Size=Vector3.new(3.2,3.4,.35);front.Color=Color3.fromRGB(245,120,35);front.Material=Enum.Material.SmoothPlastic;front.CanCollide=false;front.CanTouch=false;front.CanQuery=false;front.Massless=true;front.CFrame=torso.CFrame*CFrame.new(0,0,-.95);front.Parent=model
-    local back=front:Clone();back.Name="VestBack";back.CFrame=torso.CFrame*CFrame.new(0,0,.95);back.Parent=model
-    for _,x in ipairs({-1.7,1.7}) do local strap=Instance.new("Part");strap.Name="VestStrap";strap.Size=Vector3.new(.35,3.5,2.05);strap.Color=Color3.fromRGB(35,35,38);strap.CanCollide=false;strap.CanTouch=false;strap.CanQuery=false;strap.Massless=true;strap.CFrame=torso.CFrame*CFrame.new(x*.7,0,0);strap.Parent=model;local w=Instance.new("WeldConstraint");w.Part0=strap;w.Part1=torso;w.Parent=strap end
-    for _,x in ipairs({front,back}) do local w=Instance.new("WeldConstraint");w.Part0=x;w.Part1=torso;w.Parent=x end
+    local orange=Color3.fromRGB(245,105,25);local dark=Color3.fromRGB(38,42,46);local yellow=Color3.fromRGB(255,218,65);local white=Color3.fromRGB(245,245,240)
+    piece(model,torso,"VestFront",Vector3.new(3.45,3.35,.34),torso.CFrame*CFrame.new(0,0,-.94),orange)
+    piece(model,torso,"VestBack",Vector3.new(3.45,3.35,.34),torso.CFrame*CFrame.new(0,0,.94),orange)
+    piece(model,torso,"ShoulderLeft",Vector3.new(.65,.38,2.15),torso.CFrame*CFrame.new(-1.05,1.43,0),orange)
+    piece(model,torso,"ShoulderRight",Vector3.new(.65,.38,2.15),torso.CFrame*CFrame.new(1.05,1.43,0),orange)
+    piece(model,torso,"WaistBand",Vector3.new(3.55,.48,2.0),torso.CFrame*CFrame.new(0,-1.05,0),orange)
+    for _,x in ipairs({-.9,.9}) do piece(model,torso,"BlackStrap",Vector3.new(.3,3.55,2.02),torso.CFrame*CFrame.new(x,0,0),dark) end
+    for _,x in ipairs({-.62,.62}) do piece(model,torso,"ReflectiveStripe",Vector3.new(.22,2.75,.38),torso.CFrame*CFrame.new(x,0,-1.13),yellow) end
+    for _,x in ipairs({-.48,.48}) do piece(model,torso,"Buckle",Vector3.new(.42,.58,.22),torso.CFrame*CFrame.new(x,-.78,-1.16),dark,Enum.Material.Metal) end
+    local badge=piece(model,torso,"SafetyBadge",Vector3.new(.62,.62,.08),torso.CFrame*CFrame.new(0,.45,-1.15),white,Enum.Material.Neon)
+    local gui=Instance.new("BillboardGui");gui.Name="ProtectedBadge";gui.Size=UDim2.fromOffset(110,34);gui.StudsOffset=Vector3.new(0,2.45,0);gui.AlwaysOnTop=true;gui.Parent=badge
+    local label=Instance.new("TextLabel");label.Size=UDim2.fromScale(1,1);label.BackgroundTransparency=1;label.Text="🛡 ЗАЩИЩЁН";label.TextColor3=yellow;label.TextStrokeTransparency=.35;label.Font=Enum.Font.GothamBlack;label.TextScaled=true;label.Parent=gui
+    -- Small shoulder flotation blocks make the silhouette readable from a distance.
+    piece(model,torso,"FloatLeft",Vector3.new(.72,1.05,.72),torso.CFrame*CFrame.new(-1.52,.45,0),orange,Enum.Material.SmoothPlastic)
+    piece(model,torso,"FloatRight",Vector3.new(.72,1.05,.72),torso.CFrame*CFrame.new(1.52,.45,0),orange,Enum.Material.SmoothPlastic)
+end
+local function showShield(player)
+    local char=player.Character;local root=char and char:FindFirstChild("HumanoidRootPart");if not root then return end
+    local old=char:FindFirstChild("VestShieldEffect");if old then old:Destroy()end
+    local s=Instance.new("Part");s.Name="VestShieldEffect";s.Shape=Enum.PartType.Ball;s.Size=Vector3.new(7,7,7);s.CFrame=root.CFrame;s.Anchored=false;s.CanCollide=false;s.CanTouch=false;s.CanQuery=false;s.Massless=true;s.Material=Enum.Material.ForceField;s.Color=Color3.fromRGB(255,220,60);s.Transparency=.55;s.Parent=char;weld(s,root)
+    TweenService:Create(s,TweenInfo.new(.22,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=Vector3.new(8.5,8.5,8.5),Transparency=1}):Play();task.delay(.3,function()if s and s.Parent then s:Destroy()end end)
 end
 local function giveBlaster(player)
     local backpack=player:FindFirstChildOfClass("Backpack");if not backpack then return end
@@ -25,14 +47,10 @@ local function giveBlaster(player)
         local target,best=nil,45
         for _,other in Players:GetPlayers() do if other~=player and other:GetAttribute("RoundActive") and other.Character then local r=other.Character:FindFirstChild("HumanoidRootPart");if r then local d=r.Position-root.Position;local dist=d.Magnitude;if dist<best and dist>1 and root.CFrame.LookVector:Dot(d.Unit)>.35 then target,best=other,dist end end end end
         if target then
-            local r=target.Character and target.Character:FindFirstChild("HumanoidRootPart")
-            if r then
-                if target:GetAttribute("RobuxVest")==true then
-                    feedback(player,"VEST_BLOCK","🦺 ЖИЛЕТ ЗАЩИТИЛ ИГРОКА ОТ БЛАСТЕРА!")
-                    feedback(target,"VEST_BLOCK","🦺 ЖИЛЕТ ЗАЩИТИЛ ТЕБЯ ОТ БЛАСТЕРА!")
-                else
-                    r.AssemblyLinearVelocity=root.CFrame.LookVector*78+Vector3.new(0,14,0)
-                end
+            local targetRoot=target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                if target:GetAttribute("RobuxVest")==true then showShield(target);feedback(player,"BLASTER_BLOCKED","🦺 ЖИЛЕТ ЗАЩИТИЛ ИГРОКА!");feedback(target,"VEST_BLOCK","🛡 БЛАСТЕР ЗАБЛОКИРОВАН ЖИЛЕТОМ!")
+                else targetRoot.AssemblyLinearVelocity=root.CFrame.LookVector*78+Vector3.new(0,14,0) end
             end
         end
     end);tool.Parent=backpack
