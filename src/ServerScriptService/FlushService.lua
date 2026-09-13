@@ -13,6 +13,9 @@ local function humanoidOf(player)
     local character=player.Character
     return character and character:FindFirstChildOfClass("Humanoid")
 end
+local function protectedFromFlush(player,shopService)
+    return shopService:HasLifebuoy(player) or player:GetAttribute("RobuxLifebuoy")==true or player:GetAttribute("RobuxVest")==true
+end
 
 function FlushService:Run(arena,shopService,dataService,stateRemote)
     stateRemote:FireAllClients("FLUSH_START",Config.Flush.Duration)
@@ -46,7 +49,8 @@ function FlushService:Run(arena,shopService,dataService,stateRemote)
                     local delta=safeTop-root.Position
                     root.AssemblyLinearVelocity=delta*8+Vector3.new(0,2,0)
                     root.AssemblyAngularVelocity=Vector3.new(0,1.5,0)
-                elseif shopService:HasLifebuoy(player) or player:GetAttribute("RobuxLifebuoy")==true or player:GetAttribute("RobuxVest")==true then
+                elseif protectedFromFlush(player,shopService) then
+                    -- Premium vest and lifebuoys keep the player safe from the flush.
                     humanoid.AutoRotate=false
                     local phase=player.UserId%20
                     local orbit=Vector3.new(math.cos(elapsed*1.8+phase)*5,2+math.sin(elapsed*5+phase)*1.2,math.sin(elapsed*1.8+phase)*5)
@@ -78,7 +82,7 @@ function FlushService:Run(arena,shopService,dataService,stateRemote)
         local humanoid=humanoidOf(player)
         local alive=humanoid and humanoid.Health>0
         local reachedTop=player:GetAttribute("ReachedTop")==true
-        local paidSafety=shopService:HasLifebuoy(player) or player:GetAttribute("RobuxLifebuoy")==true or player:GetAttribute("RobuxVest")==true
+        local paidSafety=protectedFromFlush(player,shopService)
         local survived=alive and (reachedTop or paidSafety)
         if survived then survivedCount+=1 end
         player:SetAttribute("LastRoundSurvived",survived)
