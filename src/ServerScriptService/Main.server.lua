@@ -16,6 +16,7 @@ local RoundService=require(ServerScriptService:WaitForChild("RoundServiceFixed")
 local AchievementService=require(ServerScriptService:WaitForChild("AchievementService"))
 local RobuxShopService=require(ServerScriptService:WaitForChild("RobuxShopService"))
 local BossService=require(ServerScriptService:WaitForChild("BossService"))
+local BossMinionService=require(ServerScriptService:WaitForChild("BossMinionService"))
 local remotes=ReplicatedStorage:FindFirstChild("Remotes") or Instance.new("Folder");remotes.Name="Remotes";remotes.Parent=ReplicatedStorage
 local function remote(name)local r=remotes:FindFirstChild(name);if not r then r=Instance.new("RemoteEvent");r.Name=name;r.Parent=remotes end;return r end
 local stateRemote=remote("GameState");local buyRemote=remote("BuyLifebuoy");local feedbackRemote=remote("Feedback");local achievementRemote=remote("Achievements");local lobbyRemote=remote("LobbyAction")
@@ -32,5 +33,5 @@ local coinsFolder=arena:FindFirstChild("Coins");if coinsFolder then for _,coin i
 arena:SetAttribute("BuildComplete",true)
 AchievementService:Bind(DataService,feedbackRemote);ShopService:Bind(buyRemote,DataService,RoundService,feedbackRemote);RobuxShopService:Bind();RobuxShopService:Apply(arena);CoinService:BindFeedback(feedbackRemote)
 if flushPrompt then flushPrompt.Triggered:Connect(function(player)if RoundService.State~="BOSS" or player:GetAttribute("RoundActive")~=true then return end;if BossService:TriggerFlush(player)then feedbackRemote:FireClient(player,"FLUSH_TRIGGERED","🚽 БОСС ПРОВАЛИЛСЯ! ДЕРЖИТСЯ 10 СЕКУНД!")end end)end
-print("[ToiletRush] Ready: five open-center circular floors / detailed bathroom ascent / central boss")
-task.spawn(function()RoundService:Run(arena,stateRemote,CoinService,ShopService,FlushService,DataService,AchievementService,BossService)end)
+print("[ToiletRush] Ready: five floors / central boss / 25 boss minions")
+task.spawn(function()RoundService:Run(arena,stateRemote,CoinService,ShopService,FlushService,DataService,AchievementService,BossService,BossMinionService)end)
