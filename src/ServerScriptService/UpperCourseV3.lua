@@ -34,7 +34,7 @@ local function spiralRamp(parent)
     for i=1,segments do
         local a=(i-.5)*stepAngle+math.rad(-90);local y=y0+(i-.5)*dy
         local pos=point(radius,a,y)
-        local tile=part(folder,"SpiralStep",Vector3.new(width,2.8,radius*stepAngle*1.06),CFrame.new(pos)*CFrame.Angles(pitch,-a,0),Enum.Material.Marble,(i%2==0) and TILE or WHITE,true)
+        local tile=part(folder,"SpiralStep",Vector3.new(width,2.8,radius*stepAngle*1.06),CFrame.new(pos)*CFrame.Angles(-pitch,-a,0),Enum.Material.Marble,(i%2==0) and TILE or WHITE,true)
         tile:SetAttribute("UpperRoute",true)
     end
 end
@@ -49,7 +49,7 @@ local function entryStairs(parent)
 
     local steps=10
     local startTop=12.5
-    local rise=0.84
+    local rise=1.05
     local depth=2.4
     local startZ=-92
     for i=1,steps do
@@ -81,6 +81,31 @@ local function entryStairs(parent)
     label.TextScaled=true
     label.Font=Enum.Font.GothamBlack
     label.Parent=gui
+end
+
+
+-- The final spiral segment ends at x≈0, y≈95. Add a second short stair run
+-- so players can reach the top platform without jumping onto its underside.
+local function topStairs(parent)
+    local folder=Instance.new("Folder")
+    folder.Name="TopPlatformStairs"
+    folder.Parent=parent
+
+    local steps=10
+    local startTop=94.95
+    local rise=0.45
+    local run=1.0
+    local startX=0.6
+    local z=-69
+    for i=1,steps do
+        local topY=startTop+i*rise
+        local x=startX+(i-1)*run
+        local tread=part(folder,"TopStair",Vector3.new(1.3,0.8,12),CFrame.new(x,topY-0.4,z),Enum.Material.Marble,(i%2==0) and TILE or WHITE,true)
+        tread:SetAttribute("UpperRoute",true)
+        local edge=part(folder,"TopStairEdge",Vector3.new(0.12,0.16,11.6),CFrame.new(x+0.58,topY-0.02,z),Enum.Material.Neon,GOLD,false)
+        edge.CanTouch=false
+        edge.CanQuery=false
+    end
 end
 
 local function rim(parent,y,radius)
@@ -116,6 +141,7 @@ function UpperCourse:Apply(arena)
     local obstacles=arena:WaitForChild("Obstacles")
     spiralRamp(course)
     entryStairs(course)
+    topStairs(course)
     for _,y in ipairs({22,40,58,76,94})do rim(course,y,78)end
     for i,y in ipairs({22,40,58,76,94})do floorMarker(course,y,i)end
 
@@ -142,14 +168,14 @@ function UpperCourse:Apply(arena)
     for _,a in ipairs({math.rad(180),math.rad(0),math.rad(300)})do part(course,"LaundryBasket",Vector3.new(6,5,6),CFrame.new(point(60,a,72)),Enum.Material.Plastic,BLUE,true)end
 
     local throne=Instance.new("Folder");throne.Name="FlushThrone";throne.Parent=course
-    part(throne,"FinishPlatform",Vector3.new(30,5,24),CFrame.new(0,97,-60),Enum.Material.Marble,WHITE,true)
-    part(throne,"FinishPedestal",Vector3.new(16,7,13),CFrame.new(0,103,-60),Enum.Material.Marble,WHITE,true)
-    part(throne,"FlushTank",Vector3.new(18,14,7),CFrame.new(0,111,-72),Enum.Material.SmoothPlastic,WHITE,true)
-    cylinder(throne,"FlushButtonBase",10,2,CFrame.new(0,107,-60),Enum.Material.Metal,METAL,true)
-    local button=cylinder(throne,"TopFlushButton",7.5,3,CFrame.new(0,109,-60),Enum.Material.Neon,RED,true)
+    part(throne,"FinishPlatform",Vector3.new(30,5,24),CFrame.new(25,97,-69),Enum.Material.Marble,WHITE,true)
+    part(throne,"FinishPedestal",Vector3.new(16,7,13),CFrame.new(25,103,-69),Enum.Material.Marble,WHITE,true)
+    part(throne,"FlushTank",Vector3.new(18,14,7),CFrame.new(25,111,-81),Enum.Material.SmoothPlastic,WHITE,true)
+    cylinder(throne,"FlushButtonBase",10,2,CFrame.new(25,107,-69),Enum.Material.Metal,METAL,true)
+    local button=cylinder(throne,"TopFlushButton",7.5,3,CFrame.new(25,109,-69),Enum.Material.Neon,RED,true)
     button:SetAttribute("TopFlushButton",true)
     local prompt=Instance.new("ProximityPrompt");prompt.Name="FlushButtonPrompt";prompt.ActionText="СМЫТЬ БОССА";prompt.ObjectText="АВАРИЙНЫЙ СМЫВ";prompt.KeyboardKeyCode=Enum.KeyCode.E;prompt.HoldDuration=.35;prompt.MaxActivationDistance=12;prompt.RequiresLineOfSight=false;prompt.Parent=button
-    arena:SetAttribute("BossFlushPosition",Vector3.new(0,109,-60))
+    arena:SetAttribute("BossFlushPosition",Vector3.new(25,109,-69))
     arena:SetAttribute("UpperCourseReady",true);arena:SetAttribute("FiveFloorsReady",true);arena:SetAttribute("ThreeFloorsReady",true)
 end
 return UpperCourse
