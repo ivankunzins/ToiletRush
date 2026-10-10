@@ -43,6 +43,7 @@ local paths={
 "src/StarterPlayer/StarterPlayerScripts/HUD.client.lua",
 "src/StarterPlayer/StarterPlayerScripts/LifebuoyButton.client.lua",
 "src/StarterPlayer/StarterPlayerScripts/Menu.client.lua",
+"src/StarterPlayer/StarterPlayerScripts/PistolAim.client.lua",
 "src/StarterPlayer/StarterPlayerScripts/StartButtonPatch.client.lua",
 }
 
@@ -69,7 +70,7 @@ local function download(path)
 end
 
 print("[ToiletRush] =============================")
-print("[ToiletRush] INSTALLER v5 / "..VERSION)
+print("[ToiletRush] INSTALLER v6 / "..VERSION)
 print("[ToiletRush] Downloading fresh sources...")
 local sources={}
 for i,path in ipairs(paths) do
@@ -109,7 +110,7 @@ end
 local marker=ServerScriptService:FindFirstChild("ToiletRushInstallVersion") or Instance.new("StringValue")
 marker.Name="ToiletRushInstallVersion";marker.Value="v5-"..VERSION;marker.Parent=ServerScriptService
 print("[ToiletRush] =============================")
-print("[ToiletRush] INSTALL COMPLETE v5")
+print("[ToiletRush] INSTALL COMPLETE v6")
 print("[ToiletRush] SPIRAL COURSE + 5 FLOORS + BOSS + 25 MINIONS")
 print("[ToiletRush] COMPACT HUD + MOVING VISUAL NPCs")
 print("[ToiletRush] Now press PLAY")
