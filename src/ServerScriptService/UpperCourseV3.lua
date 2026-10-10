@@ -66,6 +66,27 @@ local function spiralRamp(parent)
             local art=part(folder,"WallPictureArt",Vector3.new(3.9,2.6,.12),frame.CFrame*CFrame.new(0,0,-.2),Enum.Material.SmoothPlastic,({Color3.fromRGB(94,155,126),Color3.fromRGB(210,140,91),Color3.fromRGB(105,146,190)})[(math.floor(i/10)%3)+1],false)
             art.CanTouch=false;art.CanQuery=false
         end
+        -- Varied furniture on every section; keep the middle lane open.
+        if i%9==1 then
+            local side=(i%18<9) and -1 or 1
+            local bedCF=base*CFrame.new(side*10,1.5,0)
+            part(folder,"BedroomBedFrame",Vector3.new(8,1.1,10),bedCF,Enum.Material.Wood,Color3.fromRGB(113,76,51),true)
+            part(folder,"BedroomMattress",Vector3.new(7.6,1.0,9.5),bedCF*CFrame.new(0,1,0),Enum.Material.Fabric,Color3.fromRGB(226,231,235),true)
+            part(folder,"BedroomPillow",Vector3.new(4.2,.55,1.8),bedCF*CFrame.new(0,1.8,-3.2),Enum.Material.Fabric,Color3.fromRGB(90,165,205),true)
+        elseif i%9==4 then
+            local side=(i%18<9) and 1 or -1
+            local cabinetCF=base*CFrame.new(side*11,2,0)
+            part(folder,"KitchenCabinet",Vector3.new(5,4,4),cabinetCF,Enum.Material.Wood,Color3.fromRGB(155,112,74),true)
+            part(folder,"KitchenCounter",Vector3.new(5.4,.45,4.4),cabinetCF*CFrame.new(0,2.2,0),Enum.Material.Marble,WHITE,true)
+        elseif i%9==7 then
+            local side=(i%18<9) and -1 or 1
+            local dresserCF=base*CFrame.new(side*11,2.3,0)
+            part(folder,"HallDresser",Vector3.new(5.5,4.6,2.8),dresserCF,Enum.Material.Wood,Color3.fromRGB(124,82,53),true)
+            for _,yOff in ipairs({1.0,2.0,3.0}) do
+                local drawer=part(folder,"DresserDrawer",Vector3.new(4.8,.75,.12),dresserCF*CFrame.new(0,yOff,-1.48),Enum.Material.Wood,Color3.fromRGB(164,119,78),false)
+                drawer.CanTouch=false;drawer.CanQuery=false
+            end
+        end
         if i%14==6 then
             local side=(i%28<14) and -1 or 1
             local couchCF=base*CFrame.new(side*10,1.8,0)
