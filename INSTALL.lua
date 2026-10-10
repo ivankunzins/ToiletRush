@@ -1,4 +1,4 @@
--- Toilet Rush — reliable one-paste installer v5
+-- Toilet Rush — reliable one-paste installer v7
 -- Run ONLY in Roblox Studio Edit mode, not while Play/Run is active.
 -- Enable Game Settings > Security > Allow HTTP Requests.
 local HttpService=game:GetService("HttpService")
@@ -70,7 +70,7 @@ local function download(path)
 end
 
 print("[ToiletRush] =============================")
-print("[ToiletRush] INSTALLER v6 / "..VERSION)
+print("[ToiletRush] INSTALLER v7 / "..VERSION)
 print("[ToiletRush] Downloading fresh sources...")
 local sources={}
 for i,path in ipairs(paths) do
@@ -98,19 +98,30 @@ if oldBuilder then oldBuilder:Destroy() end
 for i,path in ipairs(paths) do
     local parent=destination(path)
     local name=objectName(path)
-    local old=parent:FindFirstChild(name)
-    if old then old:Destroy() end
-    local obj=Instance.new(className(path))
-    obj.Name=name
+    local expectedClass=className(path)
+    local obj=parent:FindFirstChild(name)
+
+    -- Reuse existing instances of the correct class. Destroying and immediately
+    -- replacing Script instances can leave Studio with a locked Parent reference.
+    if obj and obj.ClassName~=expectedClass then
+        obj:Destroy()
+        obj=nil
+    end
+    if not obj then
+        obj=Instance.new(expectedClass)
+        obj.Name=name
+        obj.Parent=parent
+    end
+
+    -- Update source in-place instead of destroying/reparenting every script.
     obj.Source=sources[path]
-    obj.Parent=parent
     print(("[ToiletRush] %02d/%02d installed: %s"):format(i,#paths,name))
 end
 
 local marker=ServerScriptService:FindFirstChild("ToiletRushInstallVersion") or Instance.new("StringValue")
-marker.Name="ToiletRushInstallVersion";marker.Value="v5-"..VERSION;marker.Parent=ServerScriptService
+marker.Name="ToiletRushInstallVersion";marker.Value="v7-"..VERSION;marker.Parent=ServerScriptService
 print("[ToiletRush] =============================")
-print("[ToiletRush] INSTALL COMPLETE v6")
+print("[ToiletRush] INSTALL COMPLETE v7")
 print("[ToiletRush] SPIRAL COURSE + 5 FLOORS + BOSS + 25 MINIONS")
 print("[ToiletRush] COMPACT HUD + MOVING VISUAL NPCs")
 print("[ToiletRush] Now press PLAY")
