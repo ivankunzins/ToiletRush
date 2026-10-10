@@ -32,28 +32,36 @@ local function make(parent,name,pos)
     return m
 end
 
-local function routePoint(y,offset)
-    local t=math.clamp((y-22)/72,0,1)
-    local angle=math.rad(-90)+t*math.pi*8+(offset or 0)
-    return Vector3.new(math.cos(angle)*64,y,math.sin(angle)*64),angle
+local function routePoint(floorY)
+    local t=math.clamp((floorY-22)/72,0,1)
+    local angle=math.rad(-90)+t*math.pi*8
+    -- Match the player route center (radius 69) and put NPC feet above the stair surface.
+    local pos=Vector3.new(math.cos(angle)*69,floorY+2.35,math.sin(angle)*69)
+    return pos,angle
 end
 
-local function patrol(model,y,offset)
+local function patrol(model,startY)
     task.spawn(function()
-        local phase=offset or 0
+        local floorY=math.clamp(startY,22,94)
+        local direction=(floorY>82) and -1 or 1
         while model.Parent do
-            local nextY=y+math.sin(os.clock()*.35+phase)*2.0
-            local pos,angle=routePoint(nextY,phase)
-            local target=CFrame.new(pos)*CFrame.Angles(0,-angle,0)
+            local targetY=direction>0 and 94 or 22
+            local pos,angle=routePoint(floorY)
+            local targetPos,targetAngle=routePoint(targetY)
+            local target=CFrame.new(targetPos)*CFrame.Angles(0,-targetAngle,0)
             local value=Instance.new("CFrameValue")
             value.Value=model:GetPivot()
             local connection=value:GetPropertyChangedSignal("Value"):Connect(function()
                 if model.Parent then model:PivotTo(value.Value) end
             end)
-            TweenService:Create(value,TweenInfo.new(4.2,Enum.EasingStyle.Linear),{Value=target}):Play()
-            task.wait(4.25)
+            local duration=math.max(3,math.abs(targetY-floorY)/6)
+            local tween=TweenService:Create(value,TweenInfo.new(duration,Enum.EasingStyle.Linear),{Value=target})
+            tween:Play()
+            tween.Completed:Wait()
             connection:Disconnect();value:Destroy()
-            phase+=math.rad(55)
+            floorY=targetY
+            direction=-direction
+            task.wait(0.25)
         end
     end)
 end
@@ -64,17 +72,14 @@ function NPCBuilder:Apply(arena)
 
     -- A small visual crowd travels around the same spiral as the player.
     local entries={
-        {"NPC01",25,0},{"NPC02",28,math.rad(180)},
-        {"NPC03",40,math.rad(60)},{"NPC04",43,math.rad(240)},
-        {"NPC05",54,math.rad(120)},{"NPC06",57,math.rad(300)},
-        {"NPC07",68,math.rad(30)},{"NPC08",72,math.rad(210)},
-        {"NPC09",83,math.rad(150)},{"NPC10",89,math.rad(330)},
+        {"NPC01",24},{"NPC02",31},{"NPC03",38},{"NPC04",45},{"NPC05",52},
+        {"NPC06",59},{"NPC07",66},{"NPC08",73},{"NPC09",80},{"NPC10",88},
     }
     for _,d in ipairs(entries) do
-        local pos,angle=routePoint(d[2],d[3])
+        local pos,angle=routePoint(d[2])
         local model=make(folder,d[1],pos)
         model:PivotTo(CFrame.new(pos)*CFrame.Angles(0,-angle,0))
-        patrol(model,d[2],d[3])
+        patrol(model,d[2])
     end
     arena:SetAttribute("NPCsReady",true)
 end
