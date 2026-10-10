@@ -9,12 +9,15 @@ Config.Round = {
 
 Config.Economy = {
     StartingCoins = 0,
-    CoinValue = 5,
-    RareCoinValue = 10,
-    LifebuoyUnlockCollected = 30,
-    LifebuoyCost = 25,
-    SurvivalReward = 40,
-    ParticipationReward = 10,
+    CoinValue = 1,
+    RareCoinValue = 3,
+    LifebuoyUnlockCollected = 0, -- Shop purchases use wallet balance directly.
+    LifebuoyCost = 60,
+    PistolCost = 30,
+    VestCost = 35,
+    HealCost = 25,
+    SurvivalReward = 2,
+    ParticipationReward = 0,
 }
 
 Config.RobuxShop = {
@@ -37,7 +40,7 @@ Config.Progression = {
     ComboWindow = 4,
     ComboMax = 10,
     ComboXPPerStack = 1,
-    ComboCoinBonusPerStack = 0.10,
+    ComboCoinBonusPerStack = 0.05,
 }
 
 Config.World = {
@@ -45,7 +48,7 @@ Config.World = {
     ArenaY = 12,
     CoinCount = 24,
     RareCoinCount = 4,
-    CoinRespawnSeconds = 3,
+    CoinRespawnSeconds = 180, -- Effectively one collectible coin set per round.
     CoinPickupRadius = 5.5,
     ObstacleCount = 0,
     SpawnCount = 16,

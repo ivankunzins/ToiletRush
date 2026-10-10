@@ -155,7 +155,7 @@ function DataService:ClaimDaily(player)
     if data.DailyClaim == day - 1 then data.DailyStreak += 1 else data.DailyStreak = 1 end
 
     data.DailyClaim = day
-    local reward = math.min(25 + (data.DailyStreak - 1) * 5, 75)
+    local reward = math.min(5 + (data.DailyStreak - 1) * 2, 15)
     data.Coins += reward
     sync(player)
     return true, reward

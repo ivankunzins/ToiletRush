@@ -77,10 +77,6 @@ local function collect(coin, player, dataService)
         local comboText = currentCombo > 1 and " • COMBO x" .. tostring(currentCombo) or ""
         local bonusText = bonusCoins > 0 and " • BONUS +" .. tostring(bonusCoins) or ""
         feedback:FireClient(player, rare and "RARE_COIN" or "COIN", "+" .. tostring(totalCoins) .. " COINS" .. comboText .. bonusText)
-        if player:GetAttribute("LifebuoyUnlocked") == true and player:GetAttribute("CoinGoalNotified") ~= true then
-            player:SetAttribute("CoinGoalNotified", true)
-            feedback:FireClient(player, "GOAL", "🛟 30 ОЧКОВ СОБРАНО! КУПИ СПАСАТЕЛЬНЫЙ КРУГ!")
-        end
         if xpOk and levelUp then
             feedback:FireClient(player, "LEVEL_UP", "LEVEL UP! • LEVEL " .. tostring(level))
         end

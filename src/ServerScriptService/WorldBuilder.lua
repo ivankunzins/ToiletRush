@@ -368,7 +368,7 @@ function WorldBuilder:Build()
         c.CanTouch = true
         c:SetAttribute("Collected", false)
         c:SetAttribute("Value", Config.Economy.RareCoinValue)
-        billboard(c, "+5", Color3.fromRGB(220, 180, 255), 90, 30, Vector3.new(0, 2.5, 0))
+        billboard(c, "+" .. tostring(Config.Economy.RareCoinValue), Color3.fromRGB(220, 180, 255), 90, 30, Vector3.new(0, 2.5, 0))
     end
 
     return arena

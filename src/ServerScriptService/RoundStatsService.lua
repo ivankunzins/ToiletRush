@@ -57,9 +57,6 @@ function RoundStatsService:AddCoin(player, value, combo, bonusCoins)
     player:SetAttribute("MaxCombo", s.MaxCombo)
     player:SetAttribute("ComboBonusCoins", s.ComboBonusCoins)
 
-    if s.CoinsCollected >= Config.Economy.LifebuoyUnlockCollected then
-        player:SetAttribute("LifebuoyUnlocked", true)
-    end
 end
 
 function RoundStatsService:AddHazardHit(player, damage)
