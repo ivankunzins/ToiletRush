@@ -32,7 +32,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.fromScale(0.96, 0.19)
 title.Position = UDim2.fromScale(0.02, 0.02)
 title.BackgroundTransparency = 1
-title.Text = "🛒 МАГАЗИН • КРУГ СОХРАНЯЕТ СНАРЯЖЕНИЕ НА СЛЕДУЮЩИЙ РАУНД"
+title.Text = "🛒 МАГАЗИН • КРУГ СОХРАНЯЕТ СНАРЯЖЕНИЕ"
 title.TextColor3 = Color3.fromRGB(255, 225, 95)
 title.Font = Enum.Font.GothamBlack
 title.TextScaled = true
@@ -67,7 +67,7 @@ for i, item in ipairs(definitions) do
 end
 
 local function update()
-    local active = player:GetAttribute("RoundActive") == true
+    local active = player:GetAttribute("RoundActive") == true and player:GetAttribute("Eliminated") ~= true
     panel.Visible = active
     if not active then return end
     local pistol = player:GetAttribute("HasPistol") == true
