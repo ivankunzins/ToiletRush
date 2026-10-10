@@ -1,4 +1,4 @@
--- Toilet Rush — reliable one-paste installer v7
+-- Toilet Rush — reliable one-paste installer v8
 -- Run ONLY in Roblox Studio Edit mode, not while Play/Run is active.
 -- Enable Game Settings > Security > Allow HTTP Requests.
 local HttpService=game:GetService("HttpService")
@@ -70,7 +70,7 @@ local function download(path)
 end
 
 print("[ToiletRush] =============================")
-print("[ToiletRush] INSTALLER v7 / "..VERSION)
+print("[ToiletRush] INSTALLER v8 / "..VERSION)
 print("[ToiletRush] Downloading fresh sources...")
 local sources={}
 for i,path in ipairs(paths) do
@@ -119,9 +119,9 @@ for i,path in ipairs(paths) do
 end
 
 local marker=ServerScriptService:FindFirstChild("ToiletRushInstallVersion") or Instance.new("StringValue")
-marker.Name="ToiletRushInstallVersion";marker.Value="v7-"..VERSION;marker.Parent=ServerScriptService
+marker.Name="ToiletRushInstallVersion";marker.Value="v8-"..VERSION;marker.Parent=ServerScriptService
 print("[ToiletRush] =============================")
-print("[ToiletRush] INSTALL COMPLETE v7")
+print("[ToiletRush] INSTALL COMPLETE v8")
 print("[ToiletRush] SPIRAL COURSE + 5 FLOORS + BOSS + 25 MINIONS")
 print("[ToiletRush] COMPACT HUD + MOVING VISUAL NPCs")
 print("[ToiletRush] Now press PLAY")
