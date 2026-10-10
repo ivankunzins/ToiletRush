@@ -31,13 +31,66 @@ end
 
 local function spiralRamp(parent)
     local folder=Instance.new("Folder");folder.Name="SpiralRoute";folder.Parent=parent
-    local radius=69;local segments=92;local y0=22;local y1=94;local stepAngle=math.pi*8/segments;local dy=(y1-y0)/segments;local width=17
+    local radius=69;local segments=92;local y0=22;local y1=94;local stepAngle=math.pi*8/segments;local dy=(y1-y0)/segments
+    local width=32
+    local segmentLength=radius*stepAngle*1.08
     local pitch=math.atan2(dy,radius*stepAngle)
     for i=1,segments do
         local a=(i-.5)*stepAngle+math.rad(-90);local y=y0+(i-.5)*dy
         local pos=point(radius,a,y)
-        local tile=part(folder,"SpiralStep",Vector3.new(width,2.8,radius*stepAngle*1.06),CFrame.new(pos)*CFrame.Angles(-pitch,-a,0),Enum.Material.Marble,(i%2==0) and TILE or WHITE,true)
+        local base=CFrame.new(pos)*CFrame.Angles(-pitch,-a,0)
+        local tile=part(folder,"SpiralStep",Vector3.new(width,2.8,segmentLength),base,Enum.Material.Marble,(i%2==0) and TILE or WHITE,true)
         tile:SetAttribute("UpperRoute",true)
+        for _,side in ipairs({-1,1}) do
+            local wall=part(folder,"ApartmentWall",Vector3.new(1,13,segmentLength),base*CFrame.new(side*(width/2+0.35),6.4,0),Enum.Material.SmoothPlastic,side<0 and Color3.fromRGB(226,211,188) or Color3.fromRGB(215,225,232),true)
+            wall:SetAttribute("RoomWall",true)
+            local panel=part(folder,"WallpaperPanel",Vector3.new(0.12,8.5,segmentLength*.72),base*CFrame.new(side*(width/2-0.18),6.1,0),Enum.Material.Fabric,side<0 and Color3.fromRGB(235,220,198) or Color3.fromRGB(201,218,225),false)
+            panel.CanTouch=false;panel.CanQuery=false
+            local trim=part(folder,"WallSkirting",Vector3.new(0.18,.65,segmentLength*.94),base*CFrame.new(side*(width/2-.05),.45,0),Enum.Material.Wood,Color3.fromRGB(115,79,54),false)
+            trim.CanTouch=false;trim.CanQuery=false
+        end
+        local ceiling=part(folder,"ApartmentCeiling",Vector3.new(width+2,0.8,segmentLength),base*CFrame.new(0,13.1,0),Enum.Material.SmoothPlastic,Color3.fromRGB(242,239,228),true)
+        ceiling:SetAttribute("RoomCeiling",true)
+        local lamp=part(folder,"CeilingLamp",Vector3.new(4,.18,2.2),base*CFrame.new(0,12.55,0),Enum.Material.Neon,Color3.fromRGB(255,235,180),false)
+        lamp.CanTouch=false;lamp.CanQuery=false
+        if i%10==3 or i%10==8 then
+            local side=(i%20<10) and -1 or 1
+            local door=part(folder,"ApartmentDoor",Vector3.new(5.2,9,.35),base*CFrame.new(side*(width/2-.75),4.9,0)*CFrame.Angles(0,side*math.rad(90),0),Enum.Material.Wood,({Color3.fromRGB(113,72,47),Color3.fromRGB(151,103,69),Color3.fromRGB(91,66,53)})[(math.floor(i/10)%3)+1],false)
+            door.CanTouch=false;door.CanQuery=false
+            local knob=part(folder,"DoorHandle",Vector3.new(.25,.25,.25),door.CFrame*CFrame.new(1.7,0,-.24),Enum.Material.Metal,GOLD,false)
+            knob.Shape=Enum.PartType.Ball;knob.CanTouch=false;knob.CanQuery=false
+        elseif i%10==5 then
+            local side=(i%20<10) and -1 or 1
+            local frame=part(folder,"WallPictureFrame",Vector3.new(4.5,3.2,.28),base*CFrame.new(side*(width/2-.78),7.5,0)*CFrame.Angles(0,side*math.rad(90),0),Enum.Material.Wood,Color3.fromRGB(105,71,48),false)
+            frame.CanTouch=false;frame.CanQuery=false
+            local art=part(folder,"WallPictureArt",Vector3.new(3.9,2.6,.12),frame.CFrame*CFrame.new(0,0,-.2),Enum.Material.SmoothPlastic,({Color3.fromRGB(94,155,126),Color3.fromRGB(210,140,91),Color3.fromRGB(105,146,190)})[(math.floor(i/10)%3)+1],false)
+            art.CanTouch=false;art.CanQuery=false
+        end
+        if i%14==6 then
+            local side=(i%28<14) and -1 or 1
+            local couchCF=base*CFrame.new(side*10,1.8,0)
+            part(folder,"ApartmentSofa",Vector3.new(7,2.4,2.4),couchCF,Enum.Material.Fabric,Color3.fromRGB(72,112,133),true)
+            part(folder,"SofaBack",Vector3.new(7,2.3,.65),couchCF*CFrame.new(0,1.15,.85),Enum.Material.Fabric,Color3.fromRGB(53,83,101),true)
+            for _,dx in ipairs({-2.7,2.7}) do part(folder,"SofaArm",Vector3.new(1,.9,2.5),couchCF*CFrame.new(dx,.35,0),Enum.Material.Fabric,Color3.fromRGB(53,83,101),true) end
+        elseif i%14==11 then
+            local side=(i%28<14) and 1 or -1
+            local tvCF=base*CFrame.new(side*(width/2-1.8),4.2,0)*CFrame.Angles(0,side*math.rad(90),0)
+            part(folder,"TVConsole",Vector3.new(5.5,1.4,1.4),tvCF*CFrame.new(0,-2.1,0),Enum.Material.Wood,Color3.fromRGB(112,76,48),true)
+            local screen=part(folder,"ApartmentTV",Vector3.new(5.2,3.1,.35),tvCF,Enum.Material.SmoothPlastic,DARK,true)
+            local glass=part(folder,"TVScreen",Vector3.new(4.7,2.6,.12),screen.CFrame*CFrame.new(0,0,-.24),Enum.Material.Glass,Color3.fromRGB(85,170,202),false)
+            glass.Reflectance=.12;glass.CanTouch=false;glass.CanQuery=false
+        elseif i%14==2 then
+            local side=(i%28<14) and -1 or 1
+            local plantCF=base*CFrame.new(side*11,1.1,0)
+            cylinder(folder,"PlantPot",2.2,2.2,plantCF,Enum.Material.Slate,Color3.fromRGB(160,104,70),true)
+            local leaves=part(folder,"HousePlant",Vector3.new(2.5,3.6,2.5),plantCF*CFrame.new(0,2.3,0),Enum.Material.Grass,Color3.fromRGB(61,132,73),false)
+            leaves.Shape=Enum.PartType.Ball;leaves.CanTouch=false;leaves.CanQuery=false
+        elseif i%14==9 then
+            local side=(i%28<14) and -1 or 1
+            local tableCF=base*CFrame.new(side*9,1.3,0)
+            part(folder,"HallTable",Vector3.new(4.5,.5,2),tableCF,Enum.Material.Wood,Color3.fromRGB(133,91,57),true)
+            for _,dx in ipairs({-1.8,1.8}) do part(folder,"TableLeg",Vector3.new(.25,1.3,.25),tableCF*CFrame.new(dx,-.8,0),Enum.Material.Wood,Color3.fromRGB(90,62,43),true) end
+        end
     end
 end
 
