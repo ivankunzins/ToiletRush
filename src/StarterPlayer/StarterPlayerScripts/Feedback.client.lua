@@ -53,7 +53,7 @@ local function show(kind, message)
         BackgroundTransparency = 0.12,
     }):Play()
 
-    task.delay(kind == "COIN" and 0.8 or 1.8, function()
+    task.delay(kind == "COIN" and 0.8 or (kind == "STORY_INTRO" and 4.5 or kind == "STORY_STAGE" and 3.8 or kind == "BOSS_WARNING" and 3.2 or kind == "MINION_EVENT" and 3 or 1.8), function()
         if not label.Parent then return end
         local hideTween = TweenService:Create(label, TweenInfo.new(0.2), {
             TextTransparency = 1,

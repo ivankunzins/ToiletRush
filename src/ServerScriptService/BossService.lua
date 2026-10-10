@@ -100,7 +100,72 @@ function BossService:Stop()
 end
 function BossService:Start(arena)
  self.Active=true;self.Defeated=false;self.Flushing=false;self.Health=Config.Boss.Health;self.Arena=arena;local m,folder,refs=buildBoss(arena);self.Model=m;self.Refs=refs;self.DamageBoss=Instance.new("BindableFunction");self.DamageBoss.Name="DamageBoss";self.DamageBoss.Parent=folder;self.DamageBoss.OnInvoke=function(player,amount,source)return self:Damage(amount,player,source)end;spawnStones(arena,function(player,amount,source)return self:Damage(amount,player,source)end);fba("BOSS_START","⚠ BOSS ПОЯВИЛСЯ! БЛАСТЕР = 10 ПОПАДАНИЙ • КАМНИ = 30 ПОПАДАНИЙ")
- self._attackToken+=1;local token=self._attackToken;task.spawn(function()while self.Active and not self.Defeated and token==self._attackToken do task.wait(Config.Boss.AttackInterval);if not self.Active or self.Defeated or self.Flushing then continue end;local t=refs.head.Position;local pulse=Instance.new("Part");pulse.Shape=Enum.PartType.Ball;pulse.Size=Vector3.new(10,10,10);pulse.Anchored=true;pulse.CanCollide=false;pulse.CanTouch=false;pulse.Material=Enum.Material.Neon;pulse.Color=Color3.fromRGB(230,150,70);pulse.Transparency=.55;pulse.CFrame=CFrame.new(t);pulse.Parent=folder;TweenService:Create(pulse,TweenInfo.new(.45,Enum.EasingStyle.Quad),{Size=Vector3.new(34,34,34),Transparency=1}):Play();task.delay(.5,function()if pulse.Parent then pulse:Destroy()end end);local aim=math.random()*math.pi*2;for _,player in ipairs(Players:GetPlayers())do if player:GetAttribute("RoundActive")==true and player:GetAttribute("Eliminated")~=true then local char=player.Character;local hum=char and char:FindFirstChildOfClass("Humanoid");local root=char and char:FindFirstChild("HumanoidRootPart");if hum and root and hum.Health>0 and(root.Position-Vector3.new(0,55,0)).Magnitude<=Config.Boss.AttackRange then hum:TakeDamage(Config.Boss.AttackDamage);root.AssemblyLinearVelocity=Vector3.new(math.cos(aim)*18,10,math.sin(aim)*18);fb(player,"BOSS_ATTACK","💥 БОСС УДАРИЛ! -"..Config.Boss.AttackDamage.." HP")end end end end end)
+ self._attackToken+=1
+ local token=self._attackToken
+ task.spawn(function()
+  while self.Active and not self.Defeated and token==self._attackToken do
+   task.wait(Config.Boss.AttackInterval)
+   if not self.Active or self.Defeated or self.Flushing or token~=self._attackToken then continue end
+
+   local candidates={}
+   local bossCenter=Vector3.new(0,55,0)
+   for _,player in ipairs(Players:GetPlayers()) do
+    if player:GetAttribute("RoundActive")==true and player:GetAttribute("Eliminated")~=true then
+     local character=player.Character
+     local humanoid=character and character:FindFirstChildOfClass("Humanoid")
+     local root=character and character:FindFirstChild("HumanoidRootPart")
+     if humanoid and root and humanoid.Health>0 and (root.Position-bossCenter).Magnitude<=Config.Boss.AttackRange then
+      table.insert(candidates,{player=player,position=root.Position})
+     end
+    end
+   end
+
+   if #candidates>0 then
+    local target=candidates[math.random(1,#candidates)]
+    local warning=Instance.new("Part")
+    warning.Name="BossAttackWarning"
+    warning.Shape=Enum.PartType.Cylinder
+    warning.Size=Vector3.new(0.45,7,7)
+    warning.CFrame=CFrame.new(target.position.X,target.position.Y-3,target.position.Z)*CFrame.Angles(0,0,math.rad(90))
+    warning.Anchored=true
+    warning.CanCollide=false
+    warning.CanTouch=false
+    warning.CanQuery=false
+    warning.Material=Enum.Material.Neon
+    warning.Color=Color3.fromRGB(255,65,55)
+    warning.Transparency=0.18
+    warning.Parent=self.Arena
+    TweenService:Create(warning,TweenInfo.new(Config.Boss.AttackWarningSeconds or 0.75,Enum.EasingStyle.Quad),{
+     Size=Vector3.new(0.45,18,18),
+     Transparency=0.72
+    }):Play()
+    task.delay(1.1,function()if warning.Parent then warning:Destroy()end end)
+
+    task.wait(Config.Boss.AttackWarningSeconds or 0.75)
+    if self.Active and not self.Defeated and not self.Flushing and token==self._attackToken then
+     local radius=Config.Boss.AttackSplashRadius or 10
+     for _,player in ipairs(Players:GetPlayers()) do
+      if player:GetAttribute("RoundActive")==true and player:GetAttribute("Eliminated")~=true then
+       local character=player.Character
+       local humanoid=character and character:FindFirstChildOfClass("Humanoid")
+       local root=character and character:FindFirstChild("HumanoidRootPart")
+       if humanoid and root and humanoid.Health>0 then
+        local offset=root.Position-target.position
+        local horizontal=Vector3.new(offset.X,0,offset.Z).Magnitude
+        if horizontal<=radius and math.abs(offset.Y)<=9 then
+         humanoid:TakeDamage(Config.Boss.AttackDamage)
+         local away=Vector3.new(offset.X,0,offset.Z)
+         if away.Magnitude<0.1 then away=Vector3.new(math.random(-1,1),0,math.random(-1,1)) end
+         root.AssemblyLinearVelocity=away.Unit*24+Vector3.new(0,14,0)
+         fb(player,"BOSS_ATTACK","💥 ХРАНИТЕЛЬ УДАРИЛ! Уклоняйся от красной зоны!")
+        end
+       end
+      end
+     end
+    end
+   end
+  end
+ end)
  return true
 end
 return BossService

@@ -82,6 +82,9 @@ assert(upper:find("SpiralRoute",1,true),"VALIDATION FAILED: spiral route not dow
 assert(upper:find("FiveFloorsReady",1,true),"VALIDATION FAILED: five-floor flag missing")
 assert(sources["src/ServerScriptService/Main.server.lua"]:find("BossMinionService",1,true),"VALIDATION FAILED: minions are not connected")
 assert(sources["src/ServerScriptService/BossMinionService.lua"]:find("BossMinion",1,true),"VALIDATION FAILED: minion source")
+assert(sources["src/ServerScriptService/BossMinionService.lua"]:find("MinionWaveDelays",1,true),"VALIDATION FAILED: timed minion waves missing")
+assert(upper:find("StoryCheckpoint",1,true),"VALIDATION FAILED: story checkpoints missing")
+assert(upper:find("return prompt",1,true),"VALIDATION FAILED: boss flush prompt is not returned")
 assert(sources["src/StarterPlayer/StarterPlayerScripts/HUD.client.lua"]:find("BOSS_START",1,true),"VALIDATION FAILED: HUD source")
 print("[ToiletRush] VALIDATION OK: spiral + 5 floors + boss + 25 minions + compact HUD")
 

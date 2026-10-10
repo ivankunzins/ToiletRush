@@ -1,4 +1,6 @@
 local UpperCourse={}
+local Players=game:GetService("Players")
+local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local WHITE=Color3.fromRGB(245,247,250)
 local TILE=Color3.fromRGB(218,226,230)
 local DARK=Color3.fromRGB(42,48,52)
@@ -108,6 +110,54 @@ local function topStairs(parent)
     end
 end
 
+
+local function storyCheckpoint(parent,y,stage,message)
+    local position=routePoint(y,69)
+    local trigger=part(parent,"StoryCheckpoint"..stage,Vector3.new(18,7,18),CFrame.new(position+Vector3.new(0,3,0)),Enum.Material.Neon,CYAN,false)
+    trigger.Transparency=1
+    trigger.CanCollide=false
+    trigger.CanTouch=true
+    trigger.CanQuery=false
+
+    local beacon=part(parent,"StoryBeacon"..stage,Vector3.new(1.4,5,1.4),CFrame.new(routePoint(y,59)+Vector3.new(0,2.5,0)),Enum.Material.Neon,({CYAN,BLUE,PURPLE,ORANGE,GOLD})[stage],false)
+    beacon.Transparency=0.2
+    beacon.CanTouch=false
+    beacon.CanQuery=false
+    local gui=Instance.new("BillboardGui")
+    gui.Name="StorySign"
+    gui.Size=UDim2.fromOffset(210,42)
+    gui.StudsOffset=Vector3.new(0,4,0)
+    gui.AlwaysOnTop=true
+    gui.MaxDistance=180
+    gui.Parent=beacon
+    local label=Instance.new("TextLabel")
+    label.Size=UDim2.fromScale(1,1)
+    label.BackgroundColor3=DARK
+    label.BackgroundTransparency=0.15
+    label.Text="CHAPTER "..stage.." / 5"
+    label.TextColor3=({CYAN,BLUE,PURPLE,ORANGE,GOLD})[stage]
+    label.TextStrokeTransparency=0.35
+    label.TextScaled=true
+    label.Font=Enum.Font.GothamBlack
+    label.Parent=gui
+    local corner=Instance.new("UICorner")
+    corner.CornerRadius=UDim.new(0,8)
+    corner.Parent=label
+
+    trigger.Touched:Connect(function(hit)
+        local character=hit:FindFirstAncestorOfClass("Model")
+        local player=character and Players:GetPlayerFromCharacter(character)
+        local humanoid=character and character:FindFirstChildOfClass("Humanoid")
+        if not player or not humanoid or humanoid.Health<=0 or player:GetAttribute("RoundActive")~=true then return end
+        local current=tonumber(player:GetAttribute("StoryStage")) or 0
+        if current>=stage then return end
+        player:SetAttribute("StoryStage",stage)
+        local remotes=ReplicatedStorage:FindFirstChild("Remotes")
+        local feedback=remotes and remotes:FindFirstChild("Feedback")
+        if feedback then feedback:FireClient(player,"STORY_STAGE",message) end
+    end)
+end
+
 local function rim(parent,y,radius)
     local folder=Instance.new("Folder");folder.Name="SpiralRim"..y;folder.Parent=parent
     for i=1,40 do local a=(i-1)*math.pi*2/40;part(folder,"RimPost",Vector3.new(1,5.5,1),CFrame.new(point(radius,a,y+2.8)),Enum.Material.Metal,METAL,true) end
@@ -142,6 +192,11 @@ function UpperCourse:Apply(arena)
     spiralRamp(course)
     entryStairs(course)
     topStairs(course)
+    storyCheckpoint(course,22,1,"ГЛАВА 1/5 — Срыв смыва: найди голубую лестницу и выйди на спираль. Не падай обратно в чашу!")
+    storyCheckpoint(course,39,2,"ГЛАВА 2/5 — Мыльный коридор: скользкая площадка впереди. Не стой на месте и выбирай момент для рывка.")
+    storyCheckpoint(course,58,3,"ГЛАВА 3/5 — Щётка-страж: следи за движением уборочной машины и проходи сразу после её взмаха.")
+    storyCheckpoint(course,76,4,"ГЛАВА 4/5 — Красная зона: вращающиеся ворота не пропускают напролом. Подожди окно и держись на дорожке.")
+    storyCheckpoint(course,92,5,"ГЛАВА 5/5 — Последний рывок: доберись до золотой лестницы. После сигнала появится Хранитель Ванной!")
     for _,y in ipairs({22,40,58,76,94})do rim(course,y,78)end
     for i,y in ipairs({22,40,58,76,94})do floorMarker(course,y,i)end
 
@@ -177,5 +232,6 @@ function UpperCourse:Apply(arena)
     local prompt=Instance.new("ProximityPrompt");prompt.Name="FlushButtonPrompt";prompt.ActionText="СМЫТЬ БОССА";prompt.ObjectText="АВАРИЙНЫЙ СМЫВ";prompt.KeyboardKeyCode=Enum.KeyCode.E;prompt.HoldDuration=.35;prompt.MaxActivationDistance=12;prompt.RequiresLineOfSight=false;prompt.Parent=button
     arena:SetAttribute("BossFlushPosition",Vector3.new(25,109,-69))
     arena:SetAttribute("UpperCourseReady",true);arena:SetAttribute("FiveFloorsReady",true);arena:SetAttribute("ThreeFloorsReady",true)
+    return prompt
 end
 return UpperCourse

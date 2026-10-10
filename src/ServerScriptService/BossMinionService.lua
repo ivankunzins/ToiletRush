@@ -89,7 +89,78 @@ local function attack(minion,target)
     task.delay(duration + 0.15, cleanup)
 end
 local function patrol(minion,token)local floor=minion:GetAttribute("Floor");local index=minion:GetAttribute("Index");local base=((floor*67+index*61)%360);task.spawn(function()local step=0;while Minions.Active and token==Minions._token and minion.Parent do task.wait(3.2);if not minion:GetAttribute("Alive") then continue end;step+=1;local a=math.rad(base+((step%3)-1)*28);local pos=Vector3.new(math.cos(a)*68,floors[floor]+1.5,math.sin(a)*68);local cf=CFrame.new(pos,Vector3.new(0,floors[floor]+1.5,0));local v=Instance.new("CFrameValue");v.Value=minion:GetPivot();local c=v.Changed:Connect(function(x)if minion.Parent then minion:PivotTo(x)end end);TweenService:Create(v,TweenInfo.new(1.8,Enum.EasingStyle.Quad,Enum.EasingDirection.InOut),{Value=cf}):Play();task.delay(1.9,function()c:Disconnect();v:Destroy()end)end end)end
-local function spawn(self,token)for floor,y in ipairs(floors)do for i=1,5 do local a=math.rad((floor*67+i*61)%360);local pos=Vector3.new(math.cos(a)*68,y+1.5,math.sin(a)*68);local m=make(self.Folder,"BossMinion_F"..floor.."_"..i,pos,floor,i);patrol(m,token)end end end
-function Minions:Start(arena)self:Stop();self.Active=true;self.Arena=arena;self._token+=1;local token=self._token;local folder=Instance.new("Folder");folder.Name="BossMinions";folder.Parent=arena;self.Folder=folder;local bf=Instance.new("BindableFunction");bf.Name="DamageMinion";bf.OnInvoke=function(player,minion)return self:DamageMinion(player,minion)end;bf.Parent=folder;spawn(self,token);feedback(nil,"MINION_EVENT","👹 25 ПОМОЩНИКОВ БОССА ВЫШЛИ НА ВСЕ 5 ЭТАЖЕЙ!");task.spawn(function()while self.Active and token==self._token do task.wait(1.7);if not self.Active or token~=self._token then break end;for _,m in ipairs(folder:GetChildren())do if m:IsA("Model") and m:GetAttribute("Alive") then local root=m.PrimaryPart;local target,dist=root and nearest(root.Position);if target and dist<95 then attack(m,target)end end end end end);return true end
-function Minions:Stop()self.Active=false;self._token+=1;if self.Folder then self.Folder:Destroy();self.Folder=nil end end
+local function spawnOne(self,token,floor,index)
+    if not self.Active or token~=self._token or not self.Folder then return end
+    local angle=math.rad((floor*67+index*61)%360)
+    local pos=Vector3.new(math.cos(angle)*68,floors[floor]+1.5,math.sin(angle)*68)
+    local minion=make(self.Folder,"BossMinion_F"..floor.."_"..index,pos,floor,index)
+    patrol(minion,token)
+end
+local function spawnWave(self,token,firstIndex,lastIndex)
+    for floor=1,5 do
+        for index=firstIndex,lastIndex do
+            spawnOne(self,token,floor,index)
+        end
+    end
+end
+function Minions:Start(arena)
+    self:Stop()
+    self.Active=true
+    self.Arena=arena
+    self._token+=1
+    local token=self._token
+    self._lastAttackAt={}
+    local folder=Instance.new("Folder")
+    folder.Name="BossMinions"
+    folder.Parent=arena
+    self.Folder=folder
+    local bindable=Instance.new("BindableFunction")
+    bindable.Name="DamageMinion"
+    bindable.OnInvoke=function(player,minion) return self:DamageMinion(player,minion) end
+    bindable.Parent=folder
+
+    local delays=Config.Boss.MinionWaveDelays or {8,30,58}
+    local waves={
+        {at=delays[1] or 8,first=1,last=1,message="👹 ВОЛНА 1/3: 5 помощников выходят на все этажи!"},
+        {at=delays[2] or 30,first=2,last=3,message="⚠ ВОЛНА 2/3: Хранитель вызвал ещё 10 помощников!"},
+        {at=delays[3] or 58,first=4,last=5,message="🚨 ВОЛНА 3/3: Последние 10 помощников в игре!"},
+    }
+    task.spawn(function()
+        local previous=0
+        for _,wave in ipairs(waves) do
+            task.wait(math.max(0,wave.at-previous))
+            if not self.Active or token~=self._token or not self.Folder then return end
+            spawnWave(self,token,wave.first,wave.last)
+            feedback(nil,"MINION_EVENT",wave.message)
+            previous=wave.at
+        end
+    end)
+
+    task.spawn(function()
+        while self.Active and token==self._token do
+            task.wait(Config.Boss.MinionGlobalAttackInterval or 2.8)
+            if not self.Active or token~=self._token or not self.Folder then break end
+            local now=os.clock()
+            local candidates={}
+            for _,minion in ipairs(folder:GetChildren()) do
+                if minion:IsA("Model") and minion:GetAttribute("Alive")==true then
+                    local root=minion.PrimaryPart
+                    local target,distance
+                    if root then target,distance=nearest(root.Position) end
+                    local last=self._lastAttackAt[minion] or -math.huge
+                    if target and distance<95 and now-last>=(Config.Boss.MinionPerUnitCooldown or 7) then
+                        table.insert(candidates,{minion=minion,target=target})
+                    end
+                end
+            end
+            if #candidates>0 then
+                local chosen=candidates[math.random(1,#candidates)]
+                self._lastAttackAt[chosen.minion]=now
+                attack(chosen.minion,chosen.target)
+            end
+        end
+    end)
+    return true
+end
+function Minions:Stop()self.Active=false;self._token+=1;self._lastAttackAt={};if self.Folder then self.Folder:Destroy();self.Folder=nil end end
 return Minions

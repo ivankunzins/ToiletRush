@@ -21,9 +21,32 @@ function RoundService:Run(arena,stateRemote,coinService,shopService,flushService
   self.RoundNumber+=1;shopService:Reset();RoundStatsService:Reset(players);local deathConnections={};local characterConnections={};local recovering={}
   local function disconnectDeath(player)local c=deathConnections[player];if c then c:Disconnect();deathConnections[player]=nil end end
   local function bindCharacter(player,index)local character=player.Character;local humanoid=character and character:FindFirstChildOfClass("Humanoid");if not humanoid then return end;disconnectDeath(player);deathConnections[player]=humanoid.Died:Connect(function()if player:GetAttribute("RoundActive")~=true or recovering[player] then return end;recovering[player]=true;task.delay(.7,function()recovering[player]=nil;if player.Parent and player:GetAttribute("RoundActive")==true and player:GetAttribute("Eliminated")~=true then teleportPlayer(player,index,arena)end end)end)end
-  for i,player in ipairs(players)do player:SetAttribute("HasLifebuoy",false);player:SetAttribute("RoundActive",true);player:SetAttribute("FlushActive",false);player:SetAttribute("Eliminated",false);player:SetAttribute("ReachedTop",false);player:SetAttribute("LastRoundSurvived",false);player:SetAttribute("LobbyStatus","IN_ROUND");teleportPlayer(player,i,arena);bindCharacter(player,i);characterConnections[player]=player.CharacterAdded:Connect(function()if player:GetAttribute("RoundActive")~=true then return end;task.defer(function()if player.Parent and player:GetAttribute("RoundActive")==true and player:GetAttribute("Eliminated")~=true then bindCharacter(player,i)end end)end)end
+  for i,player in ipairs(players)do player:SetAttribute("HasLifebuoy",false);player:SetAttribute("RoundActive",true);player:SetAttribute("FlushActive",false);player:SetAttribute("Eliminated",false);player:SetAttribute("ReachedTop",false);player:SetAttribute("LastRoundSurvived",false);player:SetAttribute("StoryStage",0);player:SetAttribute("LobbyStatus","IN_ROUND");teleportPlayer(player,i,arena);bindCharacter(player,i);characterConnections[player]=player.CharacterAdded:Connect(function()if player:GetAttribute("RoundActive")~=true then return end;task.defer(function()if player.Parent and player:GetAttribute("RoundActive")==true and player:GetAttribute("Eliminated")~=true then bindCharacter(player,i)end end)end)end
   coinService:Start(arena,dataService);self.State="ROUND";self.EndAt=os.clock()+Config.Round.Duration;self.PhaseEndAt=self.EndAt;stateRemote:FireAllClients("ROUND_START",Config.Round.Duration,self.RoundNumber)
-  while self:GetTimeLeft()>0 do stateRemote:FireAllClients("TICK",self:GetTimeLeft());task.wait(1)end;coinService:Stop();self.State="BOSS";self.EndAt=0;self.PhaseEndAt=0;stateRemote:FireAllClients("BOSS_START",Config.Boss.Health);bossService:Start(arena);if minionService then minionService:Start(arena)end
+  local feedbackRemote=ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Feedback")
+  if feedbackRemote then
+   for _,player in ipairs(players) do
+    feedbackRemote:FireClient(player,"STORY_INTRO","🚽 АВАРИЙНЫЙ СМЫВ! Хранитель Ванной запечатал слив. Пройди пять испытаний и доберись до золотой лестницы за 180 секунд.")
+   end
+  end
+  while self:GetTimeLeft()>0 do stateRemote:FireAllClients("TICK",self:GetTimeLeft());task.wait(1)end
+  coinService:Stop()
+  self.State="BOSS";self.EndAt=0;self.PhaseEndAt=0
+  local remotes=ReplicatedStorage:FindFirstChild("Remotes")
+  local feedback=remotes and remotes:FindFirstChild("Feedback")
+  if feedback then feedback:FireAllClients("BOSS_WARNING","🚨 ВРЕМЯ ВЫШЛО! ХРАНИТЕЛЬ ВАННОЙ ПРОБУЖДАЕТСЯ!") end
+  task.wait(Config.Boss.WarningSeconds or 3)
+  if not hasActiveRoundPlayers() then
+   if minionService then minionService:Stop() end
+   if bossService.Stop then bossService:Stop() end
+   for _,connection in pairs(deathConnections) do connection:Disconnect() end
+   for _,connection in pairs(characterConnections) do connection:Disconnect() end
+   task.wait(1)
+   continue
+  end
+  stateRemote:FireAllClients("BOSS_START",Config.Boss.Health)
+  bossService:Start(arena)
+  if minionService then minionService:Start(arena) end
   local bossDeadline=os.clock()+(Config.Boss.Duration or 180)
   while not bossService:IsDefeated() and os.clock()<bossDeadline and hasActiveRoundPlayers() do
    stateRemote:FireAllClients("BOSS_TICK",bossService:GetHealth(),Config.Boss.Health)

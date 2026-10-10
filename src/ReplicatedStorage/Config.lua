@@ -72,6 +72,12 @@ Config.Boss = {
     AttackRange = 150,
     Height = 72,
     StoneCount = 30,
+    WarningSeconds = 3,
+    MinionWaveDelays = {8, 30, 58}, -- seconds after boss spawn
+    MinionGlobalAttackInterval = 2.8,
+    MinionPerUnitCooldown = 7,
+    AttackWarningSeconds = 0.75,
+    AttackSplashRadius = 10,
 }
 
 Config.Flush = {
