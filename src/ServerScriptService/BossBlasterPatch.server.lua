@@ -2,7 +2,7 @@ local Players=game:GetService("Players")
 local Workspace=game:GetService("Workspace")
 local Config=require(game.ReplicatedStorage:WaitForChild("Config"))
 local function tryConnect(player,tool)
-    if not tool:IsA("Tool") or tool.Name~="FlushBlaster" or tool:GetAttribute("BossPatchBound") then return end
+    if not tool:IsA("Tool") or (tool.Name~="FlushBlaster" and tool.Name~="CoinPistol") or tool:GetAttribute("BossPatchBound") then return end
     tool:SetAttribute("BossPatchBound",true)
     local cooldown=false
     tool.Activated:Connect(function()

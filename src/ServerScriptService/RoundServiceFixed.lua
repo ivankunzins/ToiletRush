@@ -41,11 +41,12 @@ function RoundService:Run(arena,stateRemote,coinService,shopService,dataService,
   self.State="INTERMISSION";self.EndAt=0;self.PhaseEndAt=os.clock()+Config.Round.Intermission
   for remaining=Config.Round.Intermission,1,-1 do stateRemote:FireAllClients("INTERMISSION",remaining);task.wait(1)end;self.PhaseEndAt=0
   local players=self:GetQueuedPlayers();if #players<Config.Round.MinimumPlayers then stateRemote:FireAllClients("LOBBY_WAIT",#players,Config.Round.MinimumPlayers);task.wait(1);continue end
-  self.RoundNumber+=1;shopService:Reset();RoundStatsService:Reset(players);local deathConnections={};local characterConnections={};local recovering={}
+  self.RoundNumber+=1;RoundStatsService:Reset(players);local deathConnections={};local characterConnections={};local recovering={}
   local function disconnectDeath(player)local c=deathConnections[player];if c then c:Disconnect();deathConnections[player]=nil end end
   local function bindCharacter(player,index)local character=player.Character;local humanoid=character and character:FindFirstChildOfClass("Humanoid");if not humanoid then return end;disconnectDeath(player);deathConnections[player]=humanoid.Died:Connect(function()if player:GetAttribute("RoundActive")~=true or recovering[player] then return end;recovering[player]=true;task.delay(.7,function()recovering[player]=nil;if player.Parent and player:GetAttribute("RoundActive")==true and player:GetAttribute("Eliminated")~=true then teleportPlayer(player,index,arena)end end)end)end
   for i,player in ipairs(players)do player:SetAttribute("HasLifebuoy",false);player:SetAttribute("RoundActive",true);player:SetAttribute("FlushActive",false);player:SetAttribute("Eliminated",false);player:SetAttribute("ReachedTop",false);player:SetAttribute("LastRoundSurvived",false);player:SetAttribute("StoryStage",0);player:SetAttribute("LobbyStatus","IN_ROUND");teleportPlayer(player,i,arena);bindCharacter(player,i);characterConnections[player]=player.CharacterAdded:Connect(function()if player:GetAttribute("RoundActive")~=true then return end;task.defer(function()if player.Parent and player:GetAttribute("RoundActive")==true and player:GetAttribute("Eliminated")~=true then bindCharacter(player,i)end end)end)end
-  coinService:Start(arena,dataService);self.State="ROUND";self.EndAt=os.clock()+Config.Round.Duration;self.PhaseEndAt=self.EndAt;fireRoundClients(stateRemote,"ROUND_START",Config.Round.Duration,self.RoundNumber)
+  if shopService.PrepareRound then shopService:PrepareRound(players) end
+   coinService:Start(arena,dataService);self.State="ROUND";self.EndAt=os.clock()+Config.Round.Duration;self.PhaseEndAt=self.EndAt;fireRoundClients(stateRemote,"ROUND_START",Config.Round.Duration,self.RoundNumber)
   local feedbackRemote=ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Feedback")
   if feedbackRemote then
    for _,player in ipairs(players) do
@@ -86,7 +87,8 @@ function RoundService:Run(arena,stateRemote,coinService,shopService,dataService,
   end
   for _,player in ipairs(Players:GetPlayers())do
    if player:GetAttribute("RoundActive")~=true then continue end
-   player:SetAttribute("LastRoundSurvived",bossDefeated)
+   if shopService.FinishRound then shopService:FinishRound(player) end
+    player:SetAttribute("LastRoundSurvived",bossDefeated)
    player:SetAttribute("RoundActive",false)
    player:SetAttribute("FlushActive",false)
    player:SetAttribute("ReachedTop",false)

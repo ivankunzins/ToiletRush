@@ -78,6 +78,18 @@ local function attack(minion,target)
         end)
         if ok and #hits > 0 then
             cleanup()
+            if target:GetAttribute("HasVest") == true or target:GetAttribute("RobuxVest") == true then
+                if target:GetAttribute("HasVest") == true then
+                    target:SetAttribute("HasVest", false)
+                    local character = target.Character
+                    local vestVisual = character and character:FindFirstChild("RoundVestVisual")
+                    if vestVisual then vestVisual:Destroy() end
+                    feedback(target, "VEST_BLOCK", "🦺 ЖИЛЕТ СПАС ОТ ПОМОЩНИКА И РАЗРУШИЛСЯ!")
+                else
+                    feedback(target, "VEST_BLOCK", "🦺 ЖИЛЕТ ЗАЩИТИЛ ОТ ПОМОЩНИКА!")
+                end
+                return
+            end
             target:SetAttribute("Eliminated", true)
             RoundStatsService:AddDamageTaken(target, humanoid.Health)
             humanoid.Health = 0
