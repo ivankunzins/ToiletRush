@@ -38,6 +38,51 @@ local function spiralRamp(parent)
         tile:SetAttribute("UpperRoute",true)
     end
 end
+
+-- A short, visible staircase connects the first-floor bowl to the elevated spiral.
+-- The spiral begins around Y=22, well above the playable bowl surface, so it
+-- must have a physical approach instead of requiring an impossible jump.
+local function entryStairs(parent)
+    local folder=Instance.new("Folder")
+    folder.Name="SpiralEntryStairs"
+    folder.Parent=parent
+
+    local steps=10
+    local startTop=12.5
+    local rise=0.84
+    local depth=2.4
+    local startZ=-92
+    for i=1,steps do
+        local topY=startTop+i*rise
+        local z=startZ+(i-1)*depth
+        local tread=part(folder,"EntryStair",Vector3.new(16,1.2,depth+0.25),CFrame.new(0,topY-0.6,z),Enum.Material.Marble,(i%2==0) and TILE or WHITE,true)
+        tread:SetAttribute("UpperRoute",true)
+
+        local edge=part(folder,"EntryStairEdge",Vector3.new(15.6,0.16,0.18),CFrame.new(0,topY-0.02,z+depth/2),Enum.Material.Neon,CYAN,false)
+        edge.CanTouch=false
+        edge.CanQuery=false
+    end
+
+    local sign=part(folder,"SpiralEntrySign",Vector3.new(12,3,0.6),CFrame.new(0,14.8,-96),Enum.Material.Metal,DARK,false)
+    sign.CanTouch=false
+    sign.CanQuery=false
+    local gui=Instance.new("BillboardGui")
+    gui.Name="EntryStairsLabel"
+    gui.Size=UDim2.fromOffset(220,55)
+    gui.StudsOffset=Vector3.new(0,3,0)
+    gui.AlwaysOnTop=true
+    gui.Parent=sign
+    local label=Instance.new("TextLabel")
+    label.Size=UDim2.fromScale(1,1)
+    label.BackgroundTransparency=1
+    label.Text="↑ UP TO FLOOR 2"
+    label.TextColor3=CYAN
+    label.TextStrokeTransparency=0.2
+    label.TextScaled=true
+    label.Font=Enum.Font.GothamBlack
+    label.Parent=gui
+end
+
 local function rim(parent,y,radius)
     local folder=Instance.new("Folder");folder.Name="SpiralRim"..y;folder.Parent=parent
     for i=1,40 do local a=(i-1)*math.pi*2/40;part(folder,"RimPost",Vector3.new(1,5.5,1),CFrame.new(point(radius,a,y+2.8)),Enum.Material.Metal,METAL,true) end
@@ -70,6 +115,7 @@ function UpperCourse:Apply(arena)
     local course=Instance.new("Folder");course.Name="UpperCourse";course.Parent=arena
     local obstacles=arena:WaitForChild("Obstacles")
     spiralRamp(course)
+    entryStairs(course)
     for _,y in ipairs({22,40,58,76,94})do rim(course,y,78)end
     for i,y in ipairs({22,40,58,76,94})do floorMarker(course,y,i)end
 
