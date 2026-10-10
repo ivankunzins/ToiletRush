@@ -71,6 +71,15 @@ function RoundStatsService:AddHazardHit(player, damage)
     player:SetAttribute("DamageTaken", s.DamageTaken)
 end
 
+function RoundStatsService:AddDamageTaken(player, damage)
+    local s = stats[player]
+    if not s then return end
+    local amount = math.max(0, math.floor(tonumber(damage) or 0))
+    if amount <= 0 then return end
+    s.DamageTaken += amount
+    player:SetAttribute("DamageTaken", s.DamageTaken)
+end
+
 function RoundStatsService:Remove(player)
     stats[player] = nil
 end

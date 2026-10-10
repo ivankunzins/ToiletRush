@@ -92,8 +92,24 @@ function RoundService:Run(arena,stateRemote,coinService,shopService,dataService,
    player:SetAttribute("ReachedTop",false)
    player:SetAttribute("LobbyStatus","QUEUED")
    local stats=RoundStatsService:Get(player)
+   local participationCoins=Config.Economy.ParticipationReward or 0
+   local participationXP=Config.Progression.ParticipationXP or 0
+   if participationCoins>0 then dataService:AddCoins(player,participationCoins) end
+   if participationXP>0 then dataService:AddXP(player,participationXP) end
+   if bossDefeated then
+    local survivalCoins=Config.Economy.SurvivalReward or 0
+    local survivalXP=Config.Progression.SurvivalXP or 0
+    if survivalCoins>0 then dataService:AddCoins(player,survivalCoins) end
+    if survivalXP>0 then dataService:AddXP(player,survivalXP) end
+   end
    dataService:MarkRound(player,bossDefeated)
    if achievementService then achievementService:EvaluateRound(player,stats,bossDefeated)end
+   local feedbackRemote=ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Feedback")
+   if feedbackRemote then
+    local totalCoins=participationCoins+(bossDefeated and (Config.Economy.SurvivalReward or 0) or 0)
+    local totalXP=participationXP+(bossDefeated and (Config.Progression.SurvivalXP or 0) or 0)
+    feedbackRemote:FireClient(player,"ROUND_REWARD",("🎁 НАГРАДА: +%d МОНЕТ • +%d XP%s"):format(totalCoins,totalXP,bossDefeated and " • ПОБЕДА!" or ""))
+   end
    stateRemote:FireClient(player,"ROUND_STATS",stats,bossDefeated)
   end
   for _,c in pairs(deathConnections)do c:Disconnect()end;for _,c in pairs(characterConnections)do c:Disconnect()end;task.wait(Config.Round.ResultsDuration)

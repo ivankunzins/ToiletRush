@@ -3,6 +3,7 @@ local TweenService=game:GetService("TweenService")
 local RunService=game:GetService("RunService")
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local Config=require(ReplicatedStorage:WaitForChild("Config"))
+local RoundStatsService=require(game.ServerScriptService:WaitForChild("RoundStatsService"))
 local Minions={Active=false,Folder=nil,Arena=nil,_token=0}
 local floors={22,40,58,76,94}
 local palettes={{Color3.fromRGB(70,115,170),Color3.fromRGB(40,45,55)},{Color3.fromRGB(75,145,105),Color3.fromRGB(45,55,50)},{Color3.fromRGB(175,120,70),Color3.fromRGB(55,48,42)},{Color3.fromRGB(125,90,155),Color3.fromRGB(45,40,52)},{Color3.fromRGB(190,150,55),Color3.fromRGB(55,50,40)}}
@@ -78,6 +79,7 @@ local function attack(minion,target)
         if ok and #hits > 0 then
             cleanup()
             target:SetAttribute("Eliminated", true)
+            RoundStatsService:AddDamageTaken(target, humanoid.Health)
             humanoid.Health = 0
             feedback(target, "MINION_HIT", "💥 ПОМОЩНИК ПОПАЛ! ВОЗРОЖДЕНИЕ ЧЕРЕЗ 10 СЕКУНД")
             task.delay(10, function()

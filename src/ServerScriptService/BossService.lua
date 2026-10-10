@@ -2,6 +2,7 @@ local Players=game:GetService("Players")
 local TweenService=game:GetService("TweenService")
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local Config=require(ReplicatedStorage:WaitForChild("Config"))
+local RoundStatsService=require(game.ServerScriptService:WaitForChild("RoundStatsService"))
 local BossService={Active=false,Defeated=false,Flushing=false,Health=0,Model=nil,Arena=nil,DamageBoss=nil,FlushPrompt=nil,_attackToken=0}
 local function fb(p,k,t)local r=ReplicatedStorage:FindFirstChild("Remotes");local x=r and r:FindFirstChild("Feedback");if x and p then x:FireClient(p,k,t)end end
 local function fba(k,t)local r=ReplicatedStorage:FindFirstChild("Remotes");local x=r and r:FindFirstChild("Feedback");if not x then return end;for _,p in ipairs(Players:GetPlayers())do if p:GetAttribute("RoundActive")==true then x:FireClient(p,k,t)end end end
@@ -153,7 +154,9 @@ function BossService:Start(arena)
         local offset=root.Position-target.position
         local horizontal=Vector3.new(offset.X,0,offset.Z).Magnitude
         if horizontal<=radius and math.abs(offset.Y)<=9 then
+         local healthBefore=humanoid.Health
          humanoid:TakeDamage(Config.Boss.AttackDamage)
+         RoundStatsService:AddDamageTaken(player,healthBefore-humanoid.Health)
          local away=Vector3.new(offset.X,0,offset.Z)
          if away.Magnitude<0.1 then away=Vector3.new(math.random(-1,1),0,math.random(-1,1)) end
          root.AssemblyLinearVelocity=away.Unit*24+Vector3.new(0,14,0)

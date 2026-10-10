@@ -270,9 +270,9 @@ local function renderAchievements(data)
 end
 
 play.Activated:Connect(function()
-    if queued or roundActive then return end
+    if roundActive then return end
     pulse(play)
-    lobbyRemote:FireServer("PLAY")
+    lobbyRemote:FireServer(queued and "LEAVE" or "PLAY")
 end)
 
 daily.Activated:Connect(function()
@@ -294,18 +294,17 @@ lobbyRemote.OnClientEvent:Connect(function(action, isQueued)
     if action ~= "QUEUE" then return end
     queued = isQueued == true
     if queued then
-        play.Text = "QUEUED ✓"
-        play.BackgroundColor3 = Color3.fromRGB(48, 105, 125)
+        play.Text = "LEAVE QUEUE"
+        play.BackgroundColor3 = Color3.fromRGB(170, 75, 65)
         status.Text = "READY FOR THE NEXT ROUND"
-        queueInfo.Text = "You are in the queue. Stay ready!"
-        setVisible(false)
+        queueInfo.Text = "You're queued. Press LEAVE QUEUE to sit out."
     else
         play.Text = "PLAY"
         play.BackgroundColor3 = Color3.fromRGB(45, 170, 105)
         status.Text = "WAITING IN LOBBY"
         queueInfo.Text = "Press PLAY to join the next round."
-        if not roundActive then setVisible(true) end
     end
+    if not roundActive then setVisible(true) end
 end)
 
 stateRemote.OnClientEvent:Connect(function(kind, value)
@@ -326,7 +325,11 @@ stateRemote.OnClientEvent:Connect(function(kind, value)
     elseif kind == "ROUND_STATS" then
         roundActive = false
         updateProfile()
-        if not queued then setVisible(true) end
+        setVisible(true)
+        if queued then
+            status.Text = "ROUND OVER — YOU'RE QUEUED"
+            queueInfo.Text = "Press LEAVE QUEUE if you want to skip the next round."
+        end
     end
 end)
 
