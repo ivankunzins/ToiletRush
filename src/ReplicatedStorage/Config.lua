@@ -62,6 +62,7 @@ Config.Hazards = {
 
 Config.Boss = {
     Health = 30,
+    Duration = 180, -- Maximum boss encounter duration in seconds.
     BlasterDamage = 3,
     StoneDamage = 1,
     AttackInterval = 2.2,

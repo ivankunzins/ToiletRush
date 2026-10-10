@@ -5,6 +5,12 @@ local RoundStatsService=require(game.ServerScriptService:WaitForChild("RoundStat
 local RoundService={State="INTERMISSION",EndAt=0,PhaseEndAt=0,RoundNumber=0}
 function RoundService:GetTimeLeft()if self.State~="ROUND"then return 0 end;return math.max(0,math.ceil(self.EndAt-os.clock()))end
 function RoundService:GetQueuedPlayers()local q={};for _,p in Players:GetPlayers()do if p:GetAttribute("Queued")==true then table.insert(q,p)end end;return q end
+local function hasActiveRoundPlayers()
+ for _,player in ipairs(Players:GetPlayers()) do
+  if player:GetAttribute("RoundActive")==true then return true end
+ end
+ return false
+end
 function RoundService:SyncPlayer(player,stateRemote)if not player.Parent then return end;if self.State=="INTERMISSION"then stateRemote:FireClient(player,"INTERMISSION",math.max(0,math.ceil(self.PhaseEndAt-os.clock())))elseif self.State=="ROUND"then stateRemote:FireClient(player,"ROUND_START",Config.Round.Duration,self.RoundNumber);stateRemote:FireClient(player,"TICK",self:GetTimeLeft())elseif self.State=="BOSS"then stateRemote:FireClient(player,"BOSS_START",Config.Boss.Health)end end
 local function teleportPlayer(player,index,arena)local character=player.Character;local humanoid=character and character:FindFirstChildOfClass("Humanoid");if not character or not humanoid or humanoid.Health<=0 then player:LoadCharacter();character=player.Character or player.CharacterAdded:Wait()end;local root=character:WaitForChild("HumanoidRootPart",8);local newHumanoid=character:FindFirstChildOfClass("Humanoid");local spawns=arena:WaitForChild("Spawns"):GetChildren();if root and #spawns>0 then local s=spawns[((index-1)%#spawns)+1];root.CFrame=s.CFrame+Vector3.new(0,4,0);root.AssemblyLinearVelocity=Vector3.zero;root.AssemblyAngularVelocity=Vector3.zero end;if newHumanoid then newHumanoid.Health=newHumanoid.MaxHealth;newHumanoid.AutoRotate=true end;return newHumanoid end
 function RoundService:Run(arena,stateRemote,coinService,shopService,flushService,dataService,achievementService,bossService,minionService)
@@ -18,9 +24,32 @@ function RoundService:Run(arena,stateRemote,coinService,shopService,flushService
   for i,player in ipairs(players)do player:SetAttribute("HasLifebuoy",false);player:SetAttribute("RoundActive",true);player:SetAttribute("FlushActive",false);player:SetAttribute("Eliminated",false);player:SetAttribute("ReachedTop",false);player:SetAttribute("LastRoundSurvived",false);player:SetAttribute("LobbyStatus","IN_ROUND");teleportPlayer(player,i,arena);bindCharacter(player,i);characterConnections[player]=player.CharacterAdded:Connect(function()if player:GetAttribute("RoundActive")~=true then return end;task.defer(function()if player.Parent and player:GetAttribute("RoundActive")==true and player:GetAttribute("Eliminated")~=true then bindCharacter(player,i)end end)end)end
   coinService:Start(arena,dataService);self.State="ROUND";self.EndAt=os.clock()+Config.Round.Duration;self.PhaseEndAt=self.EndAt;stateRemote:FireAllClients("ROUND_START",Config.Round.Duration,self.RoundNumber)
   while self:GetTimeLeft()>0 do stateRemote:FireAllClients("TICK",self:GetTimeLeft());task.wait(1)end;coinService:Stop();self.State="BOSS";self.EndAt=0;self.PhaseEndAt=0;stateRemote:FireAllClients("BOSS_START",Config.Boss.Health);bossService:Start(arena);if minionService then minionService:Start(arena)end
-  while not bossService:IsDefeated() do stateRemote:FireAllClients("BOSS_TICK",bossService:GetHealth(),Config.Boss.Health);task.wait(.5)end
+  local bossDeadline=os.clock()+(Config.Boss.Duration or 180)
+  while not bossService:IsDefeated() and os.clock()<bossDeadline and hasActiveRoundPlayers() do
+   stateRemote:FireAllClients("BOSS_TICK",bossService:GetHealth(),Config.Boss.Health)
+   task.wait(.5)
+  end
+  local bossDefeated=bossService:IsDefeated()
+  local timedOut=not bossDefeated and hasActiveRoundPlayers() and os.clock()>=bossDeadline
   if minionService then minionService:Stop()end
-  for _,player in ipairs(Players:GetPlayers())do if player:GetAttribute("RoundActive")~=true then continue end;player:SetAttribute("LastRoundSurvived",true);player:SetAttribute("RoundActive",false);player:SetAttribute("FlushActive",false);player:SetAttribute("ReachedTop",false);player:SetAttribute("LobbyStatus","QUEUED");dataService:MarkRound(player,true);if achievementService then achievementService:EvaluateRound(player,RoundStatsService:Get(player),true)end;stateRemote:FireClient(player,"ROUND_STATS",RoundStatsService:Get(player),true)end
+  if bossService.Stop then bossService:Stop()end
+  if timedOut then
+   local remotes=ReplicatedStorage:FindFirstChild("Remotes")
+   local feedback=remotes and remotes:FindFirstChild("Feedback")
+   if feedback then feedback:FireAllClients("BOSS_TIMEOUT","⏰ Время вышло! Босс не побеждён.")end
+  end
+  for _,player in ipairs(Players:GetPlayers())do
+   if player:GetAttribute("RoundActive")~=true then continue end
+   player:SetAttribute("LastRoundSurvived",bossDefeated)
+   player:SetAttribute("RoundActive",false)
+   player:SetAttribute("FlushActive",false)
+   player:SetAttribute("ReachedTop",false)
+   player:SetAttribute("LobbyStatus","QUEUED")
+   local stats=RoundStatsService:Get(player)
+   dataService:MarkRound(player,bossDefeated)
+   if achievementService then achievementService:EvaluateRound(player,stats,bossDefeated)end
+   stateRemote:FireClient(player,"ROUND_STATS",stats,bossDefeated)
+  end
   for _,c in pairs(deathConnections)do c:Disconnect()end;for _,c in pairs(characterConnections)do c:Disconnect()end;task.wait(Config.Round.ResultsDuration)
  end
 end

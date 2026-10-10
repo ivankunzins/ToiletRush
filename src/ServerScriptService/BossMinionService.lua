@@ -1,5 +1,6 @@
 local Players=game:GetService("Players")
 local TweenService=game:GetService("TweenService")
+local RunService=game:GetService("RunService")
 local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local Config=require(ReplicatedStorage:WaitForChild("Config"))
 local Minions={Active=false,Folder=nil,Arena=nil,_token=0}
@@ -12,7 +13,81 @@ local function hide(m)m:SetAttribute("Alive",false);for _,p in ipairs(m:GetDesce
 local function respawn(m,token)task.delay(10,function()if Minions.Active and token==Minions._token and m.Parent then local floor=m:GetAttribute("Floor");local angle=math.rad(m:GetAttribute("HomeAngle") or 0);local pos=Vector3.new(math.cos(angle)*68,floors[floor]+1.5,math.sin(angle)*68);m:PivotTo(CFrame.new(pos,Vector3.new(0,floors[floor]+1.5,0)));for _,p in ipairs(m:GetDescendants())do if p:IsA("BasePart") and p.Name~="Root" then p.Transparency=0 end end;m:SetAttribute("Alive",true);feedback(nil,"MINION_RESPAWN","👹 ПОМОЩНИК ВЕРНУЛСЯ НА ЭТАЖ!")end end)end
 function Minions:DamageMinion(player,minion)if not self.Active or not self.Folder or not minion or not minion:IsDescendantOf(self.Folder) or minion:GetAttribute("BossMinion")~=true or minion:GetAttribute("Alive")~=true then return false end;if not player or player:GetAttribute("RoundActive")~=true or player:GetAttribute("Eliminated")==true then return false end;local pr=player.Character and player.Character:FindFirstChild("HumanoidRootPart");local mr=minion.PrimaryPart;if not pr or not mr or (pr.Position-mr.Position).Magnitude>125 then return false end;hide(minion);feedback(player,"MINION_KILL","💥 ПОМОЩНИК УБИТ! ВОЗРОДИТСЯ ЧЕРЕЗ 10 СЕКУНД");respawn(minion,self._token);return true end
 local function nearest(pos)local best,bd=nil,math.huge;for _,plr in ipairs(Players:GetPlayers())do if plr:GetAttribute("RoundActive")==true and plr:GetAttribute("Eliminated")~=true then local ch=plr.Character;local root=ch and ch:FindFirstChild("HumanoidRootPart");local hum=ch and ch:FindFirstChildOfClass("Humanoid");if root and hum and hum.Health>0 then local d=(root.Position-pos).Magnitude;if d<bd then best,bd=plr,d end end end end;return best,bd end
-local function attack(minion,target)local root=target.Character and target.Character:FindFirstChild("HumanoidRootPart");local head=minion:FindFirstChild("Head");local stone=minion:FindFirstChild("AttackStone");if not root or not head or not stone then return end;stone.Transparency=0;stone.CFrame=head.CFrame*CFrame.new(0,-1,-2);local hit=false;local conn;conn=stone.Touched:Connect(function(part)local char=part and part:FindFirstAncestorOfClass("Model");if char~=target.Character or hit then return end;hit=true;conn:Disconnect();stone.Transparency=1;local hum=char:FindFirstChildOfClass("Humanoid");if hum and hum.Health>0 then hum.Health=0 end;target:SetAttribute("Eliminated",true);feedback(target,"MINION_HIT","💥 ПОМОЩНИК ПОПАЛ! ВОЗРОЖДЕНИЕ ЧЕРЕЗ 10 СЕКУНД");task.delay(10,function()if target.Parent and target:GetAttribute("RoundActive")==true then target:SetAttribute("Eliminated",false);target:LoadCharacter();feedback(target,"MINION_RESPAWN","↻ ТЫ ВЕРНУЛСЯ В ИГРУ!")end end)end);TweenService:Create(stone,TweenInfo.new(.48,Enum.EasingStyle.Linear),{CFrame=CFrame.new(root.Position+Vector3.new(0,1,0))}):Play();task.delay(.7,function()if conn then conn:Disconnect()end;if stone.Parent then stone.Transparency=1 end end)end
+local function attack(minion,target)
+    local character = target.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+    local head = minion:FindFirstChild("Head")
+    local stone = minion:FindFirstChild("AttackStone")
+    if not root or not humanoid or humanoid.Health <= 0 or not head or not stone then return end
+    if target:GetAttribute("RoundActive") ~= true or target:GetAttribute("Eliminated") == true then return end
+
+    -- Use a separate projectile so minion patrol animations cannot move it mid-flight.
+    local projectile = stone:Clone()
+    projectile.Name = "MinionProjectile"
+    projectile.Transparency = 0
+    projectile.Anchored = true
+    projectile.CanCollide = false
+    projectile.CanTouch = false
+    projectile.CanQuery = true
+    local startCFrame = head.CFrame * CFrame.new(0, -1, -2)
+    local endCFrame = CFrame.new(root.Position + Vector3.new(0, 1, 0))
+    projectile.CFrame = startCFrame
+    projectile.Parent = workspace
+
+    local params = OverlapParams.new()
+    params.FilterType = Enum.RaycastFilterType.Include
+    params.FilterDescendantsInstances = {character}
+    params.MaxParts = 1
+
+    local startedAt = os.clock()
+    local duration = 0.48
+    local resolved = false
+    local connection
+    local function cleanup()
+        if resolved then return end
+        resolved = true
+        if connection then
+            connection:Disconnect()
+            connection = nil
+        end
+        if projectile.Parent then projectile:Destroy() end
+    end
+
+    connection = RunService.Heartbeat:Connect(function()
+        if not Minions.Active or not minion.Parent or not target.Parent
+            or target.Character ~= character
+            or target:GetAttribute("RoundActive") ~= true
+            or target:GetAttribute("Eliminated") == true
+            or humanoid.Health <= 0 then
+            cleanup()
+            return
+        end
+
+        local alpha = math.clamp((os.clock() - startedAt) / duration, 0, 1)
+        projectile.CFrame = startCFrame:Lerp(endCFrame, alpha)
+        local ok, hits = pcall(function()
+            return workspace:GetPartBoundsInBox(projectile.CFrame, projectile.Size, params)
+        end)
+        if ok and #hits > 0 then
+            cleanup()
+            target:SetAttribute("Eliminated", true)
+            humanoid.Health = 0
+            feedback(target, "MINION_HIT", "💥 ПОМОЩНИК ПОПАЛ! ВОЗРОЖДЕНИЕ ЧЕРЕЗ 10 СЕКУНД")
+            task.delay(10, function()
+                if target.Parent and target:GetAttribute("RoundActive") == true then
+                    target:SetAttribute("Eliminated", false)
+                    target:LoadCharacter()
+                    feedback(target, "MINION_RESPAWN", "↻ ТЫ ВЕРНУЛСЯ В ИГРУ!")
+                end
+            end)
+        elseif alpha >= 1 then
+            cleanup()
+        end
+    end)
+
+    task.delay(duration + 0.15, cleanup)
+end
 local function patrol(minion,token)local floor=minion:GetAttribute("Floor");local index=minion:GetAttribute("Index");local base=((floor*67+index*61)%360);task.spawn(function()local step=0;while Minions.Active and token==Minions._token and minion.Parent do task.wait(3.2);if not minion:GetAttribute("Alive") then continue end;step+=1;local a=math.rad(base+((step%3)-1)*28);local pos=Vector3.new(math.cos(a)*68,floors[floor]+1.5,math.sin(a)*68);local cf=CFrame.new(pos,Vector3.new(0,floors[floor]+1.5,0));local v=Instance.new("CFrameValue");v.Value=minion:GetPivot();local c=v.Changed:Connect(function(x)if minion.Parent then minion:PivotTo(x)end end);TweenService:Create(v,TweenInfo.new(1.8,Enum.EasingStyle.Quad,Enum.EasingDirection.InOut),{Value=cf}):Play();task.delay(1.9,function()c:Disconnect();v:Destroy()end)end end)end
 local function spawn(self,token)for floor,y in ipairs(floors)do for i=1,5 do local a=math.rad((floor*67+i*61)%360);local pos=Vector3.new(math.cos(a)*68,y+1.5,math.sin(a)*68);local m=make(self.Folder,"BossMinion_F"..floor.."_"..i,pos,floor,i);patrol(m,token)end end end
 function Minions:Start(arena)self:Stop();self.Active=true;self.Arena=arena;self._token+=1;local token=self._token;local folder=Instance.new("Folder");folder.Name="BossMinions";folder.Parent=arena;self.Folder=folder;local bf=Instance.new("BindableFunction");bf.Name="DamageMinion";bf.OnInvoke=function(player,minion)return self:DamageMinion(player,minion)end;bf.Parent=folder;spawn(self,token);feedback(nil,"MINION_EVENT","👹 25 ПОМОЩНИКОВ БОССА ВЫШЛИ НА ВСЕ 5 ЭТАЖЕЙ!");task.spawn(function()while self.Active and token==self._token do task.wait(1.7);if not self.Active or token~=self._token then break end;for _,m in ipairs(folder:GetChildren())do if m:IsA("Model") and m:GetAttribute("Alive") then local root=m.PrimaryPart;local target,dist=root and nearest(root.Position);if target and dist<95 then attack(m,target)end end end end end);return true end

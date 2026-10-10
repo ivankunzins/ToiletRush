@@ -17,6 +17,10 @@ if not arena.Parent then return end
 local obstacles = arena:WaitForChild("Obstacles")
 local animated = {}
 local hitAt = {}
+local lastOverlapScan = 0
+local overlapParams = OverlapParams.new()
+overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+overlapParams.FilterDescendantsInstances = {arena}
 
 local function pushPlayer(part, hit)
     local character = hit:FindFirstAncestorOfClass("Model")
@@ -74,6 +78,23 @@ RunService.Heartbeat:Connect(function()
                 object.CFrame = item.origin + Vector3.new(0, wave * item.distance, 0)
             elseif item.motion == "SWEEP" then
                 object.CFrame = item.origin * CFrame.new(wave * item.distance, 0, 0)
+            end
+        end
+    end
+
+    if t - lastOverlapScan >= 0.05 then
+        lastOverlapScan = t
+        for _, item in animated do
+            local object = item.part
+            if object.Parent and object:GetAttribute("Hazard") == true then
+                local ok, overlappingParts = pcall(function()
+                    return Workspace:GetPartBoundsInBox(object.CFrame, object.Size, overlapParams)
+                end)
+                if ok then
+                    for _, hit in overlappingParts do
+                        pushPlayer(object, hit)
+                    end
+                end
             end
         end
     end
