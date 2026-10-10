@@ -223,6 +223,11 @@ local function load(player)
         return Store:GetAsync("p_" .. player.UserId)
     end)
 
+    if not player.Parent then
+        -- The player left while GetAsync was yielding; do not create an orphaned profile.
+        return
+    end
+
     if not ok then
         loadFailed[player] = true
         warn("[ToiletRush] Data load failed for " .. player.Name .. ". Player will not be allowed into rounds this session.")

@@ -4,7 +4,7 @@ local ReplicatedStorage=game:GetService("ReplicatedStorage")
 local Config=require(ReplicatedStorage:WaitForChild("Config"))
 local BossService={Active=false,Defeated=false,Flushing=false,Health=0,Model=nil,Arena=nil,DamageBoss=nil,FlushPrompt=nil,_attackToken=0}
 local function fb(p,k,t)local r=ReplicatedStorage:FindFirstChild("Remotes");local x=r and r:FindFirstChild("Feedback");if x and p then x:FireClient(p,k,t)end end
-local function fba(k,t)local r=ReplicatedStorage:FindFirstChild("Remotes");local x=r and r:FindFirstChild("Feedback");if x then x:FireAllClients(k,t)end end
+local function fba(k,t)local r=ReplicatedStorage:FindFirstChild("Remotes");local x=r and r:FindFirstChild("Feedback");if not x then return end;for _,p in ipairs(Players:GetPlayers())do if p:GetAttribute("RoundActive")==true then x:FireClient(p,k,t)end end end
 local function piece(m,n,s,cf,c,mat,shape)local p=Instance.new("Part");p.Name=n;p.Size=s;p.CFrame=cf;p.Anchored=true;p.CanCollide=false;p.CanTouch=false;p.CanQuery=true;p.CastShadow=true;p.Color=c;p.Material=mat or Enum.Material.SmoothPlastic;if shape then p.Shape=shape end;p.Parent=m;return p end
 local function buildBoss(arena)
  local old=arena:FindFirstChild("BossArena");if old then old:Destroy()end

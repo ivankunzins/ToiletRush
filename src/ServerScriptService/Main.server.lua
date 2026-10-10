@@ -11,7 +11,6 @@ local VisualEffectsBuilder=require(ServerScriptService:WaitForChild("VisualEffec
 local DataService=require(ServerScriptService:WaitForChild("DataService"))
 local CoinService=require(ServerScriptService:WaitForChild("CoinService"))
 local ShopService=require(ServerScriptService:WaitForChild("ShopService"))
-local FlushService=require(ServerScriptService:WaitForChild("FlushService"))
 local RoundService=require(ServerScriptService:WaitForChild("RoundServiceFixed"))
 local AchievementService=require(ServerScriptService:WaitForChild("AchievementService"))
 local RobuxShopService=require(ServerScriptService:WaitForChild("RobuxShopService"))
@@ -34,4 +33,4 @@ arena:SetAttribute("BuildComplete",true)
 AchievementService:Bind(DataService,feedbackRemote);ShopService:Bind(buyRemote,DataService,RoundService,feedbackRemote);RobuxShopService:Bind();RobuxShopService:Apply(arena);CoinService:BindFeedback(feedbackRemote)
 if flushPrompt then flushPrompt.Triggered:Connect(function(player)if RoundService.State~="BOSS" or player:GetAttribute("RoundActive")~=true then return end;if BossService:TriggerFlush(player)then feedbackRemote:FireClient(player,"FLUSH_TRIGGERED","🚽 БОСС ПРОВАЛИЛСЯ! ДЕРЖИТСЯ 10 СЕКУНД!")end end)end
 print("[ToiletRush] Ready: five floors / central boss / 25 boss minions")
-task.spawn(function()RoundService:Run(arena,stateRemote,CoinService,ShopService,FlushService,DataService,AchievementService,BossService,BossMinionService)end)
+task.spawn(function()RoundService:Run(arena,stateRemote,CoinService,ShopService,DataService,AchievementService,BossService,BossMinionService)end)
