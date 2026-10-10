@@ -211,31 +211,46 @@ function WorldBuilder:Build()
     local old = Workspace:FindFirstChild("ToiletArena")
     if old then old:Destroy() end
 
-    Lighting.ClockTime = 14
-    Lighting.Brightness = 2.2
-    Lighting.EnvironmentDiffuseScale = 0.7
-    Lighting.EnvironmentSpecularScale = 0.8
+    -- Bright, clean studio lighting with soft contrast and restrained bloom.
+    Lighting.ClockTime = 14.2
+    Lighting.Brightness = 2.6
+    Lighting.ExposureCompensation = 0.05
+    Lighting.EnvironmentDiffuseScale = 0.85
+    Lighting.EnvironmentSpecularScale = 1
+    Lighting.GlobalShadows = true
+    Lighting.ShadowSoftness = 0.28
+    pcall(function() Lighting.Technology = Enum.Technology.Future end)
 
     local atmosphere = Lighting:FindFirstChild("ToiletAtmosphere") or Instance.new("Atmosphere")
     atmosphere.Name = "ToiletAtmosphere"
-    atmosphere.Density = 0.2
-    atmosphere.Offset = 0.15
-    atmosphere.Glare = 0.18
-    atmosphere.Haze = 0.65
+    atmosphere.Density = 0.12
+    atmosphere.Offset = 0.1
+    atmosphere.Glare = 0.12
+    atmosphere.Haze = 0.25
+    atmosphere.Color = Color3.fromRGB(205, 224, 238)
+    atmosphere.Decay = Color3.fromRGB(112, 145, 170)
     atmosphere.Parent = Lighting
 
     local bloom = Lighting:FindFirstChild("ToiletBloom") or Instance.new("BloomEffect")
     bloom.Name = "ToiletBloom"
-    bloom.Intensity = 0.5
-    bloom.Size = 24
-    bloom.Threshold = 1.05
+    bloom.Intensity = 0.28
+    bloom.Size = 18
+    bloom.Threshold = 1.15
     bloom.Parent = Lighting
 
     local color = Lighting:FindFirstChild("ToiletColor") or Instance.new("ColorCorrectionEffect")
     color.Name = "ToiletColor"
-    color.Contrast = 0.1
-    color.Saturation = 0.14
+    color.Brightness = 0.02
+    color.Contrast = 0.12
+    color.Saturation = 0.08
+    color.TintColor = Color3.fromRGB(245, 249, 255)
     color.Parent = Lighting
+
+    local rays = Lighting:FindFirstChild("ToiletSunRays") or Instance.new("SunRaysEffect")
+    rays.Name = "ToiletSunRays"
+    rays.Intensity = 0.035
+    rays.Spread = 0.55
+    rays.Parent = Lighting
 
     local arena = Instance.new("Folder")
     arena.Name = "ToiletArena"
