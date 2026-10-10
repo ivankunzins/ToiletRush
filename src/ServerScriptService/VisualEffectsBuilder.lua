@@ -30,6 +30,31 @@ function VisualEffectsBuilder:Apply(arena)
     local water = arena:FindFirstChild("Water")
     if water then
         emitter(water, "WaterSparkles", "rbxassetid://1266170131", Color3.fromRGB(100, 220, 255), 8, {1.2, 2.2}, {1, 3}, 0.45)
+        local glow = water:FindFirstChild("WaterGlow") or Instance.new("PointLight")
+        glow.Name = "WaterGlow"
+        glow.Color = Color3.fromRGB(70, 190, 255)
+        glow.Brightness = 1.1
+        glow.Range = 34
+        glow.Shadows = false
+        glow.Parent = water
+    end
+
+    -- Give decorative ceiling fixtures real soft light, not just a bright material.
+    local course = arena:FindFirstChild("UpperCourse")
+    local lit = 0
+    if course then
+        for _, object in ipairs(course:GetDescendants()) do
+            if object:IsA("BasePart") and object.Name == "CeilingLamp" then
+                local light = object:FindFirstChild("RoomLight") or Instance.new("PointLight")
+                light.Name = "RoomLight"
+                light.Color = Color3.fromRGB(255, 226, 175)
+                light.Brightness = 0.75
+                light.Range = 20
+                light.Shadows = true
+                light.Parent = object
+                lit += 1
+            end
+        end
     end
 
     local drain = arena:FindFirstChild("Drain")
@@ -56,6 +81,7 @@ function VisualEffectsBuilder:Apply(arena)
     end
 
     arena:SetAttribute("VisualEffectsReady", true)
+    arena:SetAttribute("RoomLightsReady", lit > 0)
 end
 
 return VisualEffectsBuilder
